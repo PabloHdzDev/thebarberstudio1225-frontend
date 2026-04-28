@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  /* ⚪ BASE */
+  --color-blanco: #FFFFFF;
+  --color-beige: #F5F1E8;
+
+  /* ⚫ NEGROS (suavizados) */
+  --color-negro-barber: #111111;
+  --color-negro-suave: #1A1A1A;
+
+  /* 🌿 TIERRA */
+  --color-arena: #E6D3B3;
+  --color-camel: #C2A27C;
+  --color-marron: #8B6B4A;
+  --color-marron-oscuro: #4B3A2F;
+
+  /* ✨ ACENTOS */
+  --color-dorado: #C2A27C;
+  --color-dorado-hover: #A8844F;
+  --color-dorado-claro: #F5EEDF;
+}
