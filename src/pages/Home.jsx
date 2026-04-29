@@ -5,12 +5,12 @@ import { FaWhatsapp, FaInstagram, FaPhone } from 'react-icons/fa6';
 
 function Home() {
   const [servicios, setServicios] = useState([]);
-  const [productos, setProductos] = useState([]); // 👈 Nuevo estado para productos reales
+  const [productos, setProductos] = useState([]);
+  const [cargando, setCargando] = useState(true); // 👈 Nuevo estado de carga
 
   useEffect(() => {
     const cargarDatos = async () => {
       try {
-        // Cargamos servicios y productos en paralelo
         const [resServ, resProd] = await Promise.all([
           api.get('/servicios'),
           api.get('/productos')
@@ -19,6 +19,9 @@ function Home() {
         setProductos(resProd.data);
       } catch (err) {
         console.error("Error al cargar datos:", err);
+      } finally {
+        // Ya sea que falle o tenga éxito, quitamos la pantalla de carga
+        setCargando(false);
       }
     };
     cargarDatos();
@@ -47,9 +50,6 @@ function Home() {
           <a href="#servicios" className="border-3 border-marron bg-negro- hover:bg-marron text-marron hover:text-beige px-8 py-4 rounded-full font-extrabold text-lg transition-all shadow-lg shadow-beige/20">
             Agendar mi cita
           </a>
-          {/* <Link to="/portafolio" className="bg-transparent border-2 border-beige text-beige hover:bg-beige hover:text-negro-barber px-8 py-4 rounded-full font-bold text-lg transition-all">
-            Ver mi trabajo
-          </Link> */}
         </div>
       </section>
 
@@ -66,33 +66,45 @@ function Home() {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {servicios.map((s) => (
-              <div key={s._id} className="group relative rounded-2xl overflow-hidden border border-arena bg-beige shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col">
-                <div className="h-56 overflow-hidden">
-                  <img 
-                    src={s.imagen || 'https://via.placeholder.com/400x300?text=Servicio+Barber+Studio+1225'} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
-                    alt={s.nombre} 
-                  />
+          {/* LÓGICA DE CARGA Y VACÍO PARA SERVICIOS */}
+          {cargando ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="w-16 h-16 border-4 border-arena border-t-marron rounded-full animate-spin mb-4"></div>
+              <p className="text-marron font-bold animate-pulse tracking-widest uppercase text-sm">Cargando...</p>
+            </div>
+          ) : servicios.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-gray-400 font-medium text-lg">Por el momento no hay servicios disponibles.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+              {servicios.map((s) => (
+                <div key={s._id} className="group relative rounded-2xl overflow-hidden border border-arena bg-beige shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col">
+                  <div className="h-56 overflow-hidden">
+                    <img 
+                      src={s.imagen || 'https://via.placeholder.com/400x300?text=Servicio+Barber+Studio+1225'} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
+                      alt={s.nombre} 
+                    />
+                  </div>
+                  <div className="p-8 grow relative z-10">
+                    <h3 className="text-2xl font-bold mb-3 text-marron-oscuro group-hover:text-marron transition">{s.nombre}</h3>
+                    <p className="text-negro-barber group-hover:text-negro-suave leading-relaxed">{s.descripcion}</p>
+                  </div>
+                  <div className="px-8 py-5 bg-beige-claro flex justify-between items-center mt-auto border-t border-beige/20">
+                    <span className="text-2xl font-black text-marron-oscuro group-hover:text-marron">${s.precio}</span>
+                    <Link to={`/reservar/${s._id}`} className="px-5 py-2 rounded-lg font-semibold border border-marron bg-beige text-marron hover:text-beige hover:bg-marron hover:scale-105 transition-all">
+                      Reservar
+                    </Link>
+                  </div>
                 </div>
-                <div className="p-8 grow relative z-10">
-                  <h3 className="text-2xl font-bold mb-3 text-marron-oscuro group-hover:text-marron transition">{s.nombre}</h3>
-                  <p className="text-negro-barber group-hover:text-negro-suave leading-relaxed">{s.descripcion}</p>
-                </div>
-                <div className="px-8 py-5 bg-beige-claro flex justify-between items-center mt-auto border-t border-beige/20">
-                  <span className="text-2xl font-black text-marron-oscuro group-hover:text-marron">${s.precio}</span>
-                  <Link to={`/reservar/${s._id}`} className="px-5 py-2 rounded-lg font-semibold border border-marron bg-beige text-marron hover:text-beige hover:bg-marron hover:scale-105 transition-all">
-                    Reservar
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* 3. SECCIÓN DE PRODUCTOS (Ahora con imágenes reales) */}
+      {/* 3. SECCIÓN DE PRODUCTOS */}
       <section className="py-20 bg-white px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 mx-2 sm:mx-10 md:mx-20">
@@ -105,45 +117,56 @@ function Home() {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-            {productos.map((prod) => (
-              <div key={prod._id} className="group relative text-center p-4 border border-arena rounded-3xl bg-beige shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 overflow-hidden">
-                
-                {/* Contenedor de Imagen */}
-                <div className="h-64 rounded-2xl mb-6 overflow-hidden bg-arena">
-                    <img 
-                      src={prod.imagen || 'https://via.placeholder.com/400x400?text=Producto'} 
-                      className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" 
-                      alt={prod.nombre} 
-                    />
-                </div>
+          {/* LÓGICA DE CARGA Y VACÍO PARA PRODUCTOS */}
+          {cargando ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="w-16 h-16 border-4 border-arena border-t-marron rounded-full animate-spin mb-4"></div>
+              <p className="text-marron font-bold animate-pulse tracking-widest uppercase text-sm">Cargando...</p>
+            </div>
+          ) : productos.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-gray-400 font-medium text-lg">Por el momento no hay productos disponibles.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+              {productos.map((prod) => (
+                <div key={prod._id} className="group relative text-center p-4 border border-arena rounded-3xl bg-beige shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 overflow-hidden">
+                  
+                  {/* Contenedor de Imagen */}
+                  <div className="h-64 rounded-2xl mb-6 overflow-hidden bg-arena">
+                      <img 
+                        src={prod.imagen || 'https://via.placeholder.com/400x400?text=Producto'} 
+                        className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" 
+                        alt={prod.nombre} 
+                      />
+                  </div>
 
-                <div className="px-4 pb-4">
-                    <h3 className="text-xl font-bold mb-2 text-marron-oscuro group-hover:text-marron transition uppercase tracking-tighter">
-                        {prod.nombre}
-                    </h3>
-                    
-                    <p className="text-marron-oscuro group-hover:text-marron font-black text-2xl mb-4">
-                        ${prod.precio} <span className="text-xs text-gray-400">MXN</span>
-                    </p>
+                  <div className="px-4 pb-4">
+                      <h3 className="text-xl font-bold mb-2 text-marron-oscuro group-hover:text-marron transition uppercase tracking-tighter">
+                          {prod.nombre}
+                      </h3>
+                      
+                      <p className="text-marron-oscuro group-hover:text-marron font-black text-2xl mb-4">
+                          ${prod.precio} <span className="text-xs text-gray-400">MXN</span>
+                      </p>
 
-                    {/* Botón de compra que redirige a WhatsApp con mensaje automático */}
-                    <a
-                        href={`https://wa.me/5213318688146?text=Hola! Me interesa comprar el producto: ${prod.nombre}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-black border-2 border-marron text-marron hover:bg-marron hover:text-beige transition-all duration-300"
-                    >
-                        ADQUIRIR <FaWhatsapp className="text-xl" />
-                    </a>
-                    
-                    {prod.stock <= 3 && prod.stock > 0 && (
-                        <p className="text-[10px] font-bold text-red-500 mt-2">¡ÚLTIMAS {prod.stock} UNIDADES!</p>
-                    )}
+                      <a
+                          href={`https://wa.me/5213318688146?text=Hola! Me interesa comprar el producto: ${prod.nombre}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-black border-2 border-marron text-marron hover:bg-marron hover:text-beige transition-all duration-300"
+                      >
+                          ADQUIRIR <FaWhatsapp className="text-xl" />
+                      </a>
+                      
+                      {prod.stock <= 3 && prod.stock > 0 && (
+                          <p className="text-[10px] font-bold text-red-500 mt-2">¡ÚLTIMAS {prod.stock} UNIDADES!</p>
+                      )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
