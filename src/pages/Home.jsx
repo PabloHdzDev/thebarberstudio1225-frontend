@@ -71,6 +71,7 @@ function Home() {
             <div className="flex flex-col items-center justify-center py-20">
               <div className="w-16 h-16 border-4 border-arena border-t-marron rounded-full animate-spin mb-4"></div>
               <p className="text-marron font-bold animate-pulse tracking-widest uppercase text-sm">Cargando...</p>
+              <p className="text-marron font-bold animate-pulse tracking-widest uppercase text-xs">Puede tardar máximos 30 segundos</p>
             </div>
           ) : servicios.length === 0 ? (
             <div className="text-center py-20">
