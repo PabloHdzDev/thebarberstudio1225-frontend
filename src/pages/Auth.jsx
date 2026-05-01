@@ -13,6 +13,10 @@ function Auth() {
     whatsapp: ''       // Para Registro
   });
   const [error, setError] = useState('');
+  
+  // 👇 1. Agregamos el estado de carga
+  const [cargando, setCargando] = useState(false); 
+  
   const navigate = useNavigate();
 
   const manejarCambio = (e) => {
@@ -22,6 +26,7 @@ function Auth() {
   const enviarFormulario = async (e) => {
     e.preventDefault();
     setError('');
+    setCargando(true); // 👇 2. Activamos la animación de carga
     
     const ruta = esLogin ? '/auth/login' : '/auth/registro';
     
@@ -41,6 +46,8 @@ function Auth() {
       }
     } catch (err) {
       setError(err.response?.data?.mensaje || 'Ocurrió un error en el servidor');
+    } finally {
+      setCargando(false); // 👇 3. Apagamos la carga (falle o tenga éxito)
     }
   };
 
@@ -60,7 +67,7 @@ function Auth() {
 
         <div className="p-8">
           {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-3 mb-6 text-sm font-bold">
+            <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-3 mb-6 text-sm font-bold animate-in fade-in slide-in-from-top-2">
               {error}
             </div>
           )}
@@ -79,6 +86,7 @@ function Auth() {
                     onChange={manejarCambio}
                     className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:border-dorado focus:outline-none transition-all"
                     placeholder="Juan Pérez"
+                    disabled={cargando}
                   />
                 </div>
                 <div>
@@ -90,6 +98,7 @@ function Auth() {
                     onChange={manejarCambio}
                     className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:border-dorado focus:outline-none transition-all"
                     placeholder="ejemplo@mail.com"
+                    disabled={cargando}
                   />
                 </div>
                 <div>
@@ -101,6 +110,7 @@ function Auth() {
                     onChange={manejarCambio}
                     className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:border-dorado focus:outline-none transition-all"
                     placeholder="5512345678"
+                    disabled={cargando}
                   />
                 </div>
               </>
@@ -117,6 +127,7 @@ function Auth() {
                   onChange={manejarCambio}
                   className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:border-dorado focus:outline-none transition-all"
                   placeholder="Email o número de celular"
+                  disabled={cargando}
                 />
               </div>
             )}
@@ -131,11 +142,29 @@ function Auth() {
                 onChange={manejarCambio}
                 className="w-full bg-gray-50 border border-gray-200 p-3 rounded-xl focus:border-dorado focus:outline-none transition-all"
                 placeholder="••••••••"
+                disabled={cargando}
               />
             </div>
 
-            <button type="submit" className="w-full bg-negro-barber text-white font-black py-4 rounded-xl hover:bg-gris-oscuro transition-all uppercase tracking-widest shadow-lg mt-4">
-              {esLogin ? 'Entrar' : 'Crear Cuenta'}
+            {/* 👇 4. Botón Dinámico con Spinner */}
+            <button 
+              type="submit" 
+              disabled={cargando}
+              className={`w-full text-white font-black py-4 rounded-xl transition-all uppercase tracking-widest shadow-lg mt-4 flex justify-center items-center gap-3
+                ${cargando 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-negro-barber hover:bg-gris-oscuro'
+                }
+              `}
+            >
+              {cargando ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>{esLogin ? 'Entrando...' : 'Creando Cuenta...'}</span>
+                </>
+              ) : (
+                <span>{esLogin ? 'Entrar' : 'Crear Cuenta'}</span>
+              )}
             </button>
           </form>
 
@@ -146,7 +175,8 @@ function Auth() {
             </p>
             <button 
               onClick={() => { setEsLogin(!esLogin); setError(''); }}
-              className="text-negro-barber font-black text-sm uppercase mt-2 border-b-2 border-dorado hover:text-dorado-hover transition-all"
+              disabled={cargando}
+              className="text-negro-barber font-black text-sm uppercase mt-2 border-b-2 border-dorado hover:text-dorado-hover transition-all disabled:opacity-50"
             >
               {esLogin ? 'Registrarme ahora' : 'Iniciar Sesión'}
             </button>
