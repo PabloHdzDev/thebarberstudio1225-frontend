@@ -13,8 +13,8 @@ function Reservar() {
   const [notas, setNotas] = useState('');
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
   
-  // NUEVO: Estado para guardar las horas que se generen automáticamente
   const [horariosDinamicos, setHorariosDinamicos] = useState([]);
+  const [cargandoHoras, setCargandoHoras] = useState(false); // 👈 Nuevo estado
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -34,14 +34,10 @@ function Reservar() {
     cargarServicio();
   }, [id]);
 
-  // LÓGICA 1: Manejar el cambio de fecha y bloquear los miércoles
   const manejarCambioFecha = (e) => {
     const fechaSeleccionada = e.target.value;
-    
-    // Convertimos la fecha de manera segura para evitar saltos de zona horaria
     const fechaObj = new Date(`${fechaSeleccionada}T12:00:00`);
     
-    // getDay(): Domingo es 0, Lunes es 1, ... Miércoles es 3
     if (fechaObj.getDay() === 3) {
       setMensaje({ texto: 'Los miércoles descansamos. Por favor, elige otro día.', tipo: 'error' });
       setFecha('');
@@ -54,40 +50,62 @@ function Reservar() {
     }
   };
 
-  // LÓGICA 2: Generador de horarios cuando cambia la fecha o el servicio
+  // 👈 LÓGICA MAGISTRAL: Hablar con Google Calendar antes de pintar
   useEffect(() => {
     if (!fecha || !servicio) return;
 
-    const generarHorarios = () => {
-      const horarios = [];
-      const ahora = new Date();
-      
-      // Horario de atención: 11:00 AM a 19:00 PM (7:00 PM)
-      let tiempoActual = new Date(`${fecha}T11:00:00`);
-      const tiempoCierre = new Date(`${fecha}T19:00:00`);
-      const duracionMs = servicio.duracionMinutos * 60000;
+    const generarHorarios = async () => {
+      setCargandoHoras(true);
+      setHorariosDinamicos([]); // Limpiamos los previos
+      setMensaje({ texto: '', tipo: '' });
 
-      // Mientras el inicio del turno + la duración del servicio no pase de las 7:00 PM
-      while (tiempoActual.getTime() + duracionMs <= tiempoCierre.getTime()) {
+      try {
+        const token = localStorage.getItem('token');
+        // 1. Preguntamos a nuestro nuevo endpoint qué horas están ocupadas hoy
+        const res = await api.get(`/citas/disponibilidad/${fecha}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const bloquesOcupados = res.data; // [{start: '...', end: '...'}, ...]
+
+        const horariosDisponibles = [];
+        const ahora = new Date();
         
-        // Calculamos cuántas horas faltan desde AHORA hasta ese turno
-        const diferenciaHoras = (tiempoActual - ahora) / (1000 * 60 * 60);
+        let tiempoActual = new Date(`${fecha}T11:00:00`);
+        const tiempoCierre = new Date(`${fecha}T19:00:00`);
+        const duracionMs = servicio.duracionMinutos * 60000;
 
-        // Solo mostramos el horario si faltan más de 4 horas
-        if (diferenciaHoras >= 4) {
-          const horasStr = tiempoActual.getHours().toString().padStart(2, '0');
-          const minutosStr = tiempoActual.getMinutes().toString().padStart(2, '0');
-          horarios.push(`${horasStr}:${minutosStr}`);
+        while (tiempoActual.getTime() + duracionMs <= tiempoCierre.getTime()) {
+          const finDelTurnoPosible = new Date(tiempoActual.getTime() + duracionMs);
+          const diferenciaHoras = (tiempoActual - ahora) / (1000 * 60 * 60);
+
+          // 2. Revisamos si este turno choca con ALGÚN evento de Google Calendar
+          const hayChoque = bloquesOcupados.some(bloque => {
+            const ocupadoInicio = new Date(bloque.start).getTime();
+            const ocupadoFin = new Date(bloque.end).getTime();
+            
+            // Lógica de colisión de tiempo
+            return (tiempoActual.getTime() < ocupadoFin && finDelTurnoPosible.getTime() > ocupadoInicio);
+          });
+
+          // 3. Solo agregamos el botón si faltan > 4 horas Y NO choca con Google Calendar
+          if (diferenciaHoras >= 4 && !hayChoque) {
+            const horasStr = tiempoActual.getHours().toString().padStart(2, '0');
+            const minutosStr = tiempoActual.getMinutes().toString().padStart(2, '0');
+            horariosDisponibles.push(`${horasStr}:${minutosStr}`);
+          }
+
+          tiempoActual = new Date(tiempoActual.getTime() + duracionMs);
         }
 
-        // Sumamos la duración del servicio para el siguiente turno
-        tiempoActual = new Date(tiempoActual.getTime() + duracionMs);
-      }
-
-      setHorariosDinamicos(horarios);
-      
-      if (horarios.length === 0) {
-        setMensaje({ texto: 'Ya no hay horarios disponibles para este día.', tipo: 'error' });
+        setHorariosDinamicos(horariosDisponibles);
+        
+        if (horariosDisponibles.length === 0) {
+          setMensaje({ texto: 'La agenda de este día está completamente llena o ya es muy tarde.', tipo: 'error' });
+        }
+      } catch (error) {
+        setMensaje({ texto: 'Error al verificar disponibilidad con el calendario.', tipo: 'error' });
+      } finally {
+        setCargandoHoras(false);
       }
     };
 
@@ -101,7 +119,6 @@ function Reservar() {
     const ahora = new Date();
     const diferenciaHoras = (fechaSeleccionada - ahora) / (1000 * 60 * 60);
 
-    // Doble validación de seguridad
     if (diferenciaHoras < 4) {
       setMensaje({ texto: 'Por favor, agenda con al menos 4 horas de anticipación.', tipo: 'error' });
       return;
@@ -111,11 +128,6 @@ function Reservar() {
 
     try {
       const token = localStorage.getItem('token'); 
-      if (!token) {
-        setMensaje({ texto: 'Inicia sesión para agendar.', tipo: 'error' });
-        return;
-      }
-
       await api.post('/citas', 
         { 
           servicio: id, 
@@ -130,7 +142,7 @@ function Reservar() {
 
     } catch (error) {
       setMensaje({ 
-        texto: error.response?.data?.mensaje || 'Error al agendar. Es posible que el horario ya se ocupó.', 
+        texto: error.response?.data?.mensaje || 'Error al agendar. Alguien acaba de ganar este lugar.', 
         tipo: 'error' 
       });
     }
@@ -150,10 +162,10 @@ function Reservar() {
 
         <form onSubmit={manejarEnvio} className="p-8">
           {mensaje.texto && (
-            <div className={`p-4 rounded-xl mb-6 text-center text-sm font-bold border ${
+            <div className={`p-4 rounded-xl mb-6 text-center text-sm font-bold border animate-in fade-in ${
               mensaje.tipo === 'error' ? 'bg-red-50 border-red-200 text-red-700' : 
               mensaje.tipo === 'exito' ? 'bg-amber-50 border-dorado text-amber-900' : 
-              'bg-gray-50 border-gray-200 text-gray-700'
+              'bg-blue-50 border-blue-200 text-blue-700'
             }`}>
               {mensaje.texto}
             </div>
@@ -173,7 +185,15 @@ function Reservar() {
             />
           </div>
 
-          {fecha && horariosDinamicos.length > 0 && (
+          {/* ESTADO DE CARGA DE HORARIOS */}
+          {cargandoHoras && (
+            <div className="flex justify-center my-8">
+              <div className="w-8 h-8 border-4 border-gray-200 border-t-dorado rounded-full animate-spin"></div>
+            </div>
+          )}
+
+          {/* MOSTRAR BOTONES SI HAY DISPONIBILIDAD */}
+          {fecha && !cargandoHoras && horariosDinamicos.length > 0 && (
             <div className="mb-6 animate-in fade-in duration-300">
               <label className="flex items-center gap-2 text-negro-barber font-black text-xs uppercase tracking-widest mb-3">
                 <FaClock className="text-dorado" /> Selecciona la hora
@@ -187,7 +207,7 @@ function Reservar() {
                     className={`py-3 rounded-xl text-xs font-black transition-all ${
                       hora === h 
                       ? 'bg-dorado text-negro-barber shadow-lg shadow-dorado/30 scale-105' 
-                      : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                      : 'bg-gray-100 text-gray-500 hover:bg-dorado/20 hover:text-negro-barber'
                     }`}
                   >
                     {h}
@@ -212,7 +232,7 @@ function Reservar() {
 
           <button 
             type="submit" 
-            disabled={!fecha || !hora}
+            disabled={!fecha || !hora || cargandoHoras}
             className="w-full bg-negro-barber text-dorado font-black py-5 rounded-xl hover:bg-dorado hover:text-negro-barber disabled:opacity-30 disabled:grayscale transition-all shadow-xl uppercase tracking-widest text-sm"
           >
             Confirmar Cita
