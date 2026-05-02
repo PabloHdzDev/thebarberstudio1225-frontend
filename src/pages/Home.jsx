@@ -26,14 +26,15 @@ function Home() {
     cargarDatos();
   }, []);
 
-  // Detectamos si hay alguna oferta activa para mostrar el banner
-  const ofertasActivas = servicios.filter( s => s.esOferta && s.activo );
+  // 👇 LÓGICA DE BANNER UNIFICADO: Busca ofertas en servicios O productos
+  const hayOfertasActivas = servicios.some(s => s.esOferta && s.activo) || 
+                            productos.some(p => p.esOferta && p.activo);
 
   return (
     <div className="font-sans text-negro-barber">
       
-      {/* 👇 BANNER DE OFERTAS DINÁMICO (Se muestra solo si hay ofertas) */}
-      {ofertasActivas.length > 0 && (
+      {/* BANNER DE OFERTAS DINÁMICO (ÚNICO) */}
+      {hayOfertasActivas && (
         <div className="bg-rojo-oferta text-white py-3 px-4 text-center sticky top-0 z-50 shadow-lg flex items-center justify-center gap-3">
           <span className="animate-bounce text-xl">🔥</span>
           <p className="text-[10px] sm:text-sm font-black uppercase tracking-widest">
@@ -92,7 +93,6 @@ function Home() {
               {servicios.map((s) => (
                 <div key={s._id} className="group relative rounded-2xl overflow-hidden border border-arena bg-beige shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col">
                   
-                  {/* 👇 OVERLAY DE OFERTA EN LA TARJETA */}
                   {s.esOferta && (
                     <div className="absolute top-4 right-4 bg-rojo-oferta text-white text-[10px] sm:text-xs font-black px-4 py-2 rounded-full uppercase tracking-widest z-20 shadow-lg shadow-rojo-oferta/40 animate-pulse border-2 border-rojo-oferta">
                       🔥 Oferta Especial
@@ -112,7 +112,6 @@ function Home() {
                   </div>
                   <div className="px-8 py-5 bg-beige-claro flex justify-between items-center mt-auto border-t border-beige/20">
                     
-                    {/* 👇 PRECIO TACHADO Y PRECIO DE OFERTA */}
                     <div className="flex flex-col">
                       {s.esOferta && s.precioAnterior > 0 && (
                         <span className="text-xs text-gray-400 font-bold line-through mb-[-4px]">
@@ -166,7 +165,14 @@ function Home() {
               {productos.map((prod) => (
                 <div key={prod._id} className="group relative text-center p-4 border border-arena rounded-3xl bg-beige shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 overflow-hidden">
                   
-                  <div className="h-64 rounded-2xl mb-6 overflow-hidden bg-arena">
+                  {/* 👇 OVERLAY DE OFERTA PARA PRODUCTOS */}
+                  {prod.esOferta && (
+                    <div className="absolute top-4 right-4 bg-rojo-oferta text-white text-[10px] sm:text-xs font-black px-4 py-2 rounded-full uppercase tracking-widest z-20 shadow-lg shadow-rojo-oferta/40 animate-pulse border-2 border-rojo-oferta">
+                      🔥 Oferta Especial
+                    </div>
+                  )}
+
+                  <div className="h-64 rounded-2xl mb-6 overflow-hidden bg-arena relative">
                       <img 
                         src={prod.imagen || 'https://via.placeholder.com/400x400?text=Producto'} 
                         className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" 
@@ -179,15 +185,27 @@ function Home() {
                           {prod.nombre}
                       </h3>
                       
-                      <p className="text-marron-oscuro group-hover:text-marron font-black text-2xl mb-4">
-                          ${prod.precio} <span className="text-xs text-gray-400">MXN</span>
-                      </p>
+                      {/* 👇 PRECIO TACHADO Y PRECIO DE OFERTA PARA PRODUCTOS */}
+                      <div className="flex flex-col items-center justify-center mb-4">
+                        {prod.esOferta && prod.precioAnterior > 0 && (
+                          <span className="text-xs text-gray-400 font-bold line-through mb-[-4px]">
+                            ${prod.precioAnterior}
+                          </span>
+                        )}
+                        <p className={`font-black text-2xl group-hover:text-marron transition-colors ${prod.esOferta ? 'text-rojo-oferta' : 'text-marron-oscuro'}`}>
+                            ${prod.precio} <span className="text-xs text-gray-400 font-normal">MXN</span>
+                        </p>
+                      </div>
 
                       <a
                           href={`https://wa.me/5213318688146?text=Hola! Me interesa comprar el producto: ${prod.nombre}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-black border-2 border-marron text-marron hover:bg-marron hover:text-beige transition-all duration-300"
+                          className={`flex items-center justify-center gap-2 w-full py-3 rounded-xl font-black transition-all duration-300 ${
+                            prod.esOferta 
+                            ? 'border-2 border-rojo-oferta text-rojo-oferta hover:bg-rojo-oferta hover:text-white' 
+                            : 'border-2 border-marron text-marron hover:bg-marron hover:text-beige'
+                          }`}
                       >
                           ADQUIRIR <FaWhatsapp className="text-xl" />
                       </a>
