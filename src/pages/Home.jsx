@@ -6,7 +6,7 @@ import { FaWhatsapp, FaInstagram, FaPhone } from 'react-icons/fa6';
 function Home() {
   const [servicios, setServicios] = useState([]);
   const [productos, setProductos] = useState([]);
-  const [cargando, setCargando] = useState(true); // 👈 Nuevo estado de carga
+  const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -20,23 +20,34 @@ function Home() {
       } catch (err) {
         console.error("Error al cargar datos:", err);
       } finally {
-        // Ya sea que falle o tenga éxito, quitamos la pantalla de carga
         setCargando(false);
       }
     };
     cargarDatos();
   }, []);
 
+  // Detectamos si hay alguna oferta activa para mostrar el banner
+  const ofertasActivas = servicios.filter( s => s.esOferta && s.activo );
+
   return (
     <div className="font-sans text-negro-barber">
+      
+      {/* 👇 BANNER DE OFERTAS DINÁMICO (Se muestra solo si hay ofertas) */}
+      {ofertasActivas.length > 0 && (
+        <div className="bg-rojo-oferta text-white py-3 px-4 text-center sticky top-0 z-50 shadow-lg flex items-center justify-center gap-3">
+          <span className="animate-bounce text-xl">🔥</span>
+          <p className="text-[10px] sm:text-sm font-black uppercase tracking-widest">
+            ¡Aprovecha nuestras promociones exclusivas por tiempo limitado!
+          </p>
+          <span className="animate-bounce text-xl">🔥</span>
+        </div>
+      )}
       
       {/* 1. HERO SECTION */}
       <section className="min-h-screen flex flex-col justify-center items-center text-center px-4 bg-beige text-negro-barber">
       <h1 className="text-4xl md:text-7xl xl:text-8xl font-black mb-4 tracking-tighter">
         <span className="block text-2xl md:text-4xl xl:text-5xl">THE</span>
-
         BARBER STUDIO
-
         <div className="flex items-center gap-4 mt-2">
           <span className="ml-5 md:ml-15 flex-1 h-1 bg-negro-suave"></span>
           <span className="text-2xl md:text-4xl xl:text-5xl whitespace-nowrap">1225</span>
@@ -53,7 +64,7 @@ function Home() {
         </div>
       </section>
 
-      {/* 2. SECCIÓN DE SERVICIOS (Dinámica) */}
+      {/* 2. SECCIÓN DE SERVICIOS */}
       <section id="servicios" className="py-20 bg-gray-50 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16 mx-2 sm:mx-10 md:mx-20">
@@ -66,12 +77,11 @@ function Home() {
             </div>
           </div>
           
-          {/* LÓGICA DE CARGA Y VACÍO PARA SERVICIOS */}
           {cargando ? (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="w-16 h-16 border-4 border-arena border-t-marron rounded-full animate-spin mb-4"></div>
               <p className="text-marron font-bold animate-pulse tracking-widest uppercase text-sm">Cargando...</p>
-              <p className="text-marron font-bold animate-pulse tracking-widest uppercase text-xs">Puede tardar máximos 30 segundos</p>
+              <p className="text-marron font-bold animate-pulse tracking-widest uppercase text-xs">Puede tardar máximo 30 segundos</p>
             </div>
           ) : servicios.length === 0 ? (
             <div className="text-center py-20">
@@ -81,6 +91,14 @@ function Home() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
               {servicios.map((s) => (
                 <div key={s._id} className="group relative rounded-2xl overflow-hidden border border-arena bg-beige shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col">
+                  
+                  {/* 👇 OVERLAY DE OFERTA EN LA TARJETA */}
+                  {s.esOferta && (
+                    <div className="absolute top-4 right-4 bg-rojo-oferta text-white text-[10px] sm:text-xs font-black px-4 py-2 rounded-full uppercase tracking-widest z-20 shadow-lg shadow-rojo-oferta/40 animate-pulse border-2 border-rojo-oferta">
+                      🔥 Oferta Especial
+                    </div>
+                  )}
+
                   <div className="h-56 overflow-hidden">
                     <img 
                       src={s.imagen || 'https://via.placeholder.com/400x300?text=Servicio+Barber+Studio+1225'} 
@@ -93,8 +111,24 @@ function Home() {
                     <p className="text-negro-barber group-hover:text-negro-suave leading-relaxed">{s.descripcion}</p>
                   </div>
                   <div className="px-8 py-5 bg-beige-claro flex justify-between items-center mt-auto border-t border-beige/20">
-                    <span className="text-2xl font-black text-marron-oscuro group-hover:text-marron">${s.precio}</span>
-                    <Link to={`/reservar/${s._id}`} className="px-5 py-2 rounded-lg font-semibold border border-marron bg-beige text-marron hover:text-beige hover:bg-marron hover:scale-105 transition-all">
+                    
+                    {/* 👇 PRECIO TACHADO Y PRECIO DE OFERTA */}
+                    <div className="flex flex-col">
+                      {s.esOferta && s.precioAnterior > 0 && (
+                        <span className="text-xs text-gray-400 font-bold line-through mb-[-4px]">
+                          ${s.precioAnterior}
+                        </span>
+                      )}
+                      <span className={`text-2xl font-black group-hover:text-marron ${s.esOferta ? 'text-rojo-oferta' : 'text-marron-oscuro'}`}>
+                        ${s.precio}
+                      </span>
+                    </div>
+
+                    <Link to={`/reservar/${s._id}`} className={`px-5 py-2 rounded-lg font-semibold border hover:scale-105 transition-all ${
+                      s.esOferta 
+                      ? 'border-rojo-oferta bg-rojo-oferta text-white shadow-lg shadow-rojo-oferta/30' 
+                      : 'border-marron bg-beige text-marron hover:text-beige hover:bg-marron'
+                    }`}>
                       Reservar
                     </Link>
                   </div>
@@ -118,7 +152,6 @@ function Home() {
             </div>
           </div>
           
-          {/* LÓGICA DE CARGA Y VACÍO PARA PRODUCTOS */}
           {cargando ? (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="w-16 h-16 border-4 border-arena border-t-marron rounded-full animate-spin mb-4"></div>
@@ -133,7 +166,6 @@ function Home() {
               {productos.map((prod) => (
                 <div key={prod._id} className="group relative text-center p-4 border border-arena rounded-3xl bg-beige shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 overflow-hidden">
                   
-                  {/* Contenedor de Imagen */}
                   <div className="h-64 rounded-2xl mb-6 overflow-hidden bg-arena">
                       <img 
                         src={prod.imagen || 'https://via.placeholder.com/400x400?text=Producto'} 
@@ -194,7 +226,6 @@ function Home() {
             </p>
 
             <div className="w-full h-48 bg-negro-barber rounded-xl flex items-center justify-center text-beige border border-gray-700 overflow-hidden">
-              
               <iframe
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1867.573429010577!2d-103.43487340160522!3d20.582059400000006!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8428ad234eb3317f%3A0x8a43ef56fc8fa6ce!2z8J-SiEJhcmJlcsOtYSBzdHVkaW8gMTIyNfCfkog!5e0!3m2!1ses!2smx!4v1776730254597!5m2!1ses!2smx"
                 className="w-full h-full"
@@ -203,7 +234,6 @@ function Home() {
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
               ></iframe>
-
             </div>
           </div>
         </div>

@@ -25,7 +25,8 @@ function BarberDashboard() {
   const [form, setForm] = useState({
     nombre: '', descripcion: '', precio: '', stock: 0, duracionMinutos: 30, 
     fechaHora: '', notas: '', activo: true,
-    servicio: '', cliente: '', nombreInvitado: '', esInvitado: false
+    servicio: '', cliente: '', nombreInvitado: '', esInvitado: false,
+    orden: 0, esOferta: false, precioAnterior: ''
   });
 
   const mostrarNotificacion = (mensaje, tipo = 'exito') => {
@@ -109,9 +110,14 @@ function BarberDashboard() {
         data.append('precio', form.precio);
         data.append('descripcion', form.descripcion);
         data.append('activo', form.activo);
+        data.append('orden', form.orden);  
         
+        if (tabActiva === 'servicios') {
+          data.append('duracionMinutos', form.duracionMinutos);
+          data.append('esOferta', form.esOferta);
+          data.append('precioAnterior', form.precioAnterior || 0);
+        }
         if (tabActiva === 'productos') data.append('stock', form.stock);
-        if (tabActiva === 'servicios') data.append('duracionMinutos', form.duracionMinutos);
         if (archivo) data.append('imagen', archivo);
 
         const config = { headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` } };
@@ -402,23 +408,24 @@ function BarberDashboard() {
                 {/* --- FORMULARIO PRODUCTOS / SERVICIOS --- */}
                 {tabActiva !== 'citas' ? (
                   <>
-                    <div>
-                      <label className="flex items-center justify-between cursor-pointer bg-dorado/10 p-4 rounded-xl border border-dorado/30 hover:border-dorado transition-colors">
-                        <span className="text-[10px] md:text-xs font-black uppercase text-negro-barber tracking-widest flex items-center gap-2">
-                          <FaEyeSlash className={form.activo ? 'text-gray-400' : 'text-red-500'}/> Visible al público
-                        </span>
-                        <input type="checkbox" checked={form.activo} onChange={(e) => setForm({...form, activo: e.target.checked})} className="w-5 h-5 accent-dorado cursor-pointer" />
-                      </label>
+                    <div className="flex items-center justify-between bg-dorado/10 p-4 rounded-xl border border-dorado/30 hover:border-dorado transition-colors">
+                      <span className="text-[10px] md:text-xs font-black uppercase text-negro-barber tracking-widest flex items-center gap-2">
+                        <FaEyeSlash className={form.activo ? 'text-gray-400' : 'text-red-500'}/> Visible al público
+                      </span>
+                      <input type="checkbox" checked={form.activo} onChange={(e) => setForm({...form, activo: e.target.checked})} className="w-5 h-5 accent-dorado cursor-pointer" />
                     </div>
+
                     <div>
                       <label className="text-[10px] md:text-xs font-black uppercase text-gray-400 tracking-widest">Nombre</label>
                       <input type="text" required value={form.nombre} onChange={(e) => setForm({...form, nombre: e.target.value})} className="w-full mt-1 p-3 md:p-4 bg-gray-50 border-2 border-gray-100 rounded-xl md:rounded-2xl focus:border-dorado focus:outline-none font-bold" />
                     </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-[10px] md:text-xs font-black uppercase text-gray-400 tracking-widest">Precio</label>
+                        <label className="text-[10px] md:text-xs font-black uppercase text-gray-400 tracking-widest">Precio Normal</label>
                         <input type="number" required value={form.precio} onChange={(e) => setForm({...form, precio: e.target.value})} className="w-full mt-1 p-3 md:p-4 bg-gray-50 border-2 border-gray-100 rounded-xl md:rounded-2xl focus:border-dorado focus:outline-none font-bold" />
                       </div>
+                      
                       {tabActiva === 'servicios' ? (
                         <div>
                           <label className="text-[10px] md:text-xs font-black uppercase text-dorado tracking-widest">Duración</label>
@@ -433,10 +440,50 @@ function BarberDashboard() {
                         </div>
                       )}
                     </div>
+
+                    {/* 👇 SECCIÓN DE CONFIGURACIÓN AVANZADA (MEJORADA) */}
+                    {tabActiva === 'servicios' && (
+                      <div className="bg-gray-50 p-5 rounded-2xl border-2 border-gray-100 space-y-4">
+                        <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-2">
+                          <h4 className="text-xs font-black uppercase text-gray-400 tracking-widest">Opciones Avanzadas</h4>
+                        </div>
+                        
+                        <div className="flex flex-col sm:flex-row gap-6">
+                          {/* Input de Orden (Más compacto) */}
+                          <div className="flex-1">
+                            <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest flex items-center justify-between">
+                              Posición (Orden) <span className="text-gray-300 font-normal">0 es primero</span>
+                            </label>
+                            <input type="number" value={form.orden} onChange={(e) => setForm({...form, orden: e.target.value})} className="w-full mt-1 p-3 bg-white border border-gray-200 rounded-xl focus:border-dorado focus:ring-1 focus:ring-dorado font-bold outline-none transition-all" />
+                          </div>
+                          
+                          {/* Checkbox de Oferta */}
+                          <div className="flex-1 flex flex-col justify-center">
+                            <label className="flex items-center gap-3 cursor-pointer mt-2 sm:mt-6 p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                              <input type="checkbox" checked={form.esOferta} onChange={(e) => setForm({...form, esOferta: e.target.checked})} className="w-5 h-5 accent-red-500 rounded cursor-pointer" />
+                              <span className="text-xs font-black uppercase text-red-500 tracking-widest flex items-center gap-1">
+                                🔥 Activar Oferta
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* Input de Precio Anterior (Solo aparece si es oferta, con animación suave) */}
+                        <div className={`transition-all duration-300 ease-in-out overflow-hidden ${form.esOferta ? 'max-h-24 opacity-100 mt-4' : 'max-h-0 opacity-0 m-0'}`}>
+                          <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Precio Anterior (Se mostrará tachado)</label>
+                          <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
+                            <input type="number" value={form.precioAnterior} onChange={(e) => setForm({...form, precioAnterior: e.target.value})} className="w-full mt-1 p-3 pl-8 bg-white border border-red-200 rounded-xl focus:border-red-500 focus:ring-1 focus:ring-red-500 font-bold text-red-500 line-through outline-none transition-all" placeholder="Ej. 350" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div>
                       <label className="text-[10px] md:text-xs font-black uppercase text-gray-400 tracking-widest">Descripción</label>
                       <textarea rows="2" value={form.descripcion} onChange={(e) => setForm({...form, descripcion: e.target.value})} className="w-full mt-1 p-3 md:p-4 bg-gray-50 border-2 border-gray-100 rounded-xl md:rounded-2xl focus:border-dorado focus:outline-none" />
                     </div>
+
                     <div>
                       <label className="flex items-center gap-3 cursor-pointer bg-gray-50 p-4 rounded-xl border-2 border-dashed border-gray-200 hover:border-dorado transition-colors">
                         <FaCamera className="text-dorado text-2xl" />
