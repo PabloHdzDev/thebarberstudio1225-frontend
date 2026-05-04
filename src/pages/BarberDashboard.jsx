@@ -16,6 +16,7 @@ function BarberDashboard() {
   const [serviciosList, setServiciosList] = useState([]); 
   
   const [tabActiva, setTabActiva] = useState('citas'); 
+  const [filtroCitas, setFiltroCitas] = useState('proximas'); // 👈 NUEVO: Estado para sub-pestañas
   const [mostrarForm, setMostrarForm] = useState(false);
   const [menuMovil, setMenuMovil] = useState(false);
   const [itemAEditar, setItemAEditar] = useState(null);
@@ -165,44 +166,44 @@ function BarberDashboard() {
     setMenuMovil(false);
   };
 
-  // --- NUEVO CÁLCULO DE ESTADÍSTICAS ---
+  // --- CÁLCULO DE ESTADÍSTICAS ---
   const calcularEstadisticas = () => {
     if (citas.length === 0) return { ingresos: 0, promedio: 0, total: 0, diasSemana: [], maxPromedio: 0 };
-    
-    // 1. Ingresos y totales
     const ingresosTotales = citas.reduce((acc, c) => acc + (c.servicio?.precio || 0), 0);
     const diasUnicos = new Set(citas.map(c => new Date(c.fechaHora).toDateString())).size;
     const promedioDiario = diasUnicos > 0 ? (citas.length / diasUnicos).toFixed(1) : 0;
-
-    // 2. Lógica para el promedio de cortes por día de la semana
     const nombresDias = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-    
-    // Creamos un mapa para los 7 días de la semana
     const mapaDias = Array(7).fill(0).map(() => ({ totalCortes: 0, fechasUnicas: new Set() }));
 
     citas.forEach(c => {
       const fecha = new Date(c.fechaHora);
-      const diaSemana = fecha.getDay(); // Retorna 0 para Domingo, 1 para Lunes...
+      const diaSemana = fecha.getDay(); 
       mapaDias[diaSemana].totalCortes += 1;
       mapaDias[diaSemana].fechasUnicas.add(fecha.toDateString());
     });
 
     const diasSemana = mapaDias.map((data, index) => {
-      // Si el barbero ha trabajado 3 lunes en la historia, dividimos los cortes de los lunes entre 3.
       const promedio = data.fechasUnicas.size > 0 ? (data.totalCortes / data.fechasUnicas.size).toFixed(1) : 0;
-      return {
-        dia: nombresDias[index],
-        promedio: parseFloat(promedio)
-      };
+      return { dia: nombresDias[index], promedio: parseFloat(promedio) };
     });
 
-    // Encontrar el valor más alto para escalar la gráfica dinámicamente
     const maxPromedio = Math.max(...diasSemana.map(d => d.promedio), 1);
-
     return { ingresos: ingresosTotales, promedio: promedioDiario, total: citas.length, diasSemana, maxPromedio };
   };
   
   const stats = calcularEstadisticas();
+
+  // 👇 NUEVA LÓGICA DE FILTRADO DE CITAS (Próximas vs Pasadas)
+  const ahora = new Date();
+  const citasMostradas = citas.filter(cita => {
+    const esPasada = new Date(cita.fechaHora) < ahora;
+    return filtroCitas === 'proximas' ? !esPasada : esPasada;
+  });
+
+  // Si vemos el historial, ordenamos de la más reciente a la más vieja
+  if (filtroCitas === 'pasadas') {
+    citasMostradas.sort((a, b) => new Date(b.fechaHora) - new Date(a.fechaHora));
+  }
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col md:flex-row">
@@ -288,7 +289,6 @@ function BarberDashboard() {
               </div>
             </div>
 
-            {/* Nueva Gráfica de Barras: Cortes por día de la semana */}
             <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
               <h3 className="text-xl font-black text-negro-barber uppercase mb-8 flex items-center gap-3">
                 <FaChartColumn className="text-dorado" /> Promedio de Cortes por Día
@@ -296,28 +296,22 @@ function BarberDashboard() {
               
               <div className="flex items-end justify-between gap-2 h-48 mt-4 pt-6 border-b border-gray-100">
                 {stats.diasSemana.map((dia, i) => {
-                  // Calculamos la altura de la barra en porcentaje (máximo 100%)
                   const heightPercent = dia.promedio > 0 ? (dia.promedio / stats.maxPromedio) * 100 : 0;
                   const esCerrado = dia.promedio === 0;
 
                   return (
                     <div key={i} className="flex-1 flex flex-col items-center justify-end h-full gap-2 group relative">
-                      {/* Tooltip flotante con el número exacto */}
                       <div className={`absolute -top-8 text-xs font-black px-2 py-1 rounded-md transition-all duration-300
                         ${esCerrado ? 'text-gray-300' : 'text-negro-barber bg-dorado/20 opacity-0 group-hover:opacity-100 -translate-y-2 group-hover:-translate-y-0'}
                       `}>
                         {dia.promedio}
                       </div>
-
-                      {/* La barra */}
                       <div 
                         className={`w-full max-w-[40px] md:max-w-[60px] rounded-t-xl transition-all duration-500 cursor-pointer
                           ${esCerrado ? 'bg-gray-100' : 'bg-dorado/30 group-hover:bg-dorado'}
                         `}
                         style={{ height: esCerrado ? '4px' : `${heightPercent}%` }}
                       ></div>
-                      
-                      {/* El nombre del día */}
                       <div className={`text-[10px] md:text-xs font-black uppercase mt-2 
                         ${esCerrado ? 'text-gray-300' : 'text-gray-500 group-hover:text-negro-barber'}
                       `}>
@@ -327,39 +321,85 @@ function BarberDashboard() {
                   );
                 })}
               </div>
-              <p className="text-center text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-6">
-                Basado en tu historial de citas completadas
-              </p>
             </div>
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mt-8">
+        {/* 👇 BOTONES DE SUB-TABS (Próximas vs Pasadas) */}
+        {tabActiva === 'citas' && (
+          <div className="flex gap-2 mb-6 bg-gray-200 p-1.5 rounded-xl w-full sm:w-fit">
+            <button 
+              onClick={() => setFiltroCitas('proximas')} 
+              className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${filtroCitas === 'proximas' ? 'bg-white text-negro-barber shadow-md' : 'text-gray-500 hover:text-negro-barber'}`}
+            >
+              Próximas
+            </button>
+            <button 
+              onClick={() => setFiltroCitas('pasadas')} 
+              className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${filtroCitas === 'pasadas' ? 'bg-white text-negro-barber shadow-md' : 'text-gray-500 hover:text-negro-barber'}`}
+            >
+              Historial
+            </button>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {tabActiva === 'citas' ? (
-            citas.map(cita => (
-              <div key={cita._id} className="bg-white p-6 rounded-2rem shadow-sm border-t-4 border-dorado relative">
-                <div className="flex justify-between items-start mb-4">
-                  <span className="bg-dorado/10 text-dorado px-3 py-1 rounded-full text-[10px] md:text-xs font-black uppercase">
-                    {new Date(cita.fechaHora).toLocaleDateString()} - {new Date(cita.fechaHora).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                  </span>
-                  <button onClick={() => eliminarElemento(cita._id)} className="text-gray-300 hover:text-red-500 transition"><FaTrash /></button>
-                </div>
-                <h3 className="text-xl font-black text-negro-barber mt-3">
-                  {cita.cliente ? cita.cliente.nombre : `${cita.nombreInvitado} (Walk-in)`}
-                </h3>
-                <p className="text-gray-500 font-bold mb-1">{cita.servicio?.nombre}</p>
-                {cita.notas && <p className="text-xs text-gray-400 italic mb-4">"{cita.notas}"</p>}
-                
-                <div className="flex flex-col gap-2 mt-4">
-                  {cita.cliente && (
-                    <a href={`https://wa.me/${cita.cliente.whatsapp}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition">
-                      <FaWhatsapp /> Contactar
-                    </a>
-                  )}
-                  <button onClick={() => prepararEdicionCita(cita)} className="flex items-center justify-center gap-2 py-3 bg-gray-100 text-negro-barber rounded-xl hover:bg-dorado transition font-bold"><FaCalendarDay /> Reprogramar</button>
-                </div>
+            citasMostradas.length === 0 ? (
+              <div className="col-span-full py-20 text-center">
+                <p className="text-gray-400 font-bold text-lg">No hay citas en esta sección.</p>
               </div>
-            ))
+            ) : (
+              citasMostradas.map(cita => (
+                <div key={cita._id} className={`bg-white p-6 rounded-2rem shadow-sm border-t-4 relative ${cita.esExterno ? 'border-blue-500' : 'border-dorado'} ${filtroCitas === 'pasadas' ? 'opacity-80' : ''}`}>
+                  
+                  <div className="flex justify-between items-start mb-4">
+                    <span className={`px-3 py-1 rounded-full text-[10px] md:text-xs font-black uppercase ${cita.esExterno ? 'bg-blue-50 text-blue-600' : 'bg-dorado/10 text-dorado'}`}>
+                      {new Date(cita.fechaHora).toLocaleDateString()} - {new Date(cita.fechaHora).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    </span>
+                    <button onClick={() => eliminarElemento(cita._id)} className="text-gray-300 hover:text-red-500 transition"><FaTrash /></button>
+                  </div>
+
+                  <h3 className="text-xl font-black text-negro-barber mt-3">
+                    {cita.cliente ? cita.cliente.nombre : cita.esExterno ? cita.nombreInvitado : `${cita.nombreInvitado} (Walk-in)`}
+                  </h3>
+                  
+                  <p className={`font-bold mb-1 ${cita.esExterno ? 'text-blue-500' : 'text-gray-500'}`}>
+                    {cita.servicio?.nombre}
+                  </p>
+                  
+                  {/* 👇 ACÁ SE INYECTA EL HTML DE GOOGLE CON SEGURIDAD Y ESTILOS */}
+                  {cita.notas && (
+                    <div 
+                      className="text-xs text-gray-400 italic mb-4 line-clamp-3 [&>b]:text-negro-barber" 
+                      dangerouslySetInnerHTML={{ __html: cita.notas }} 
+                    />
+                  )}
+                  
+                  <div className="flex flex-col gap-2 mt-4">
+                    {cita.cliente && (
+                      <a href={`https://wa.me/${cita.cliente.whatsapp}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition">
+                        <FaWhatsapp /> Contactar
+                      </a>
+                    )}
+                    
+                    {!cita.esExterno && filtroCitas === 'proximas' && (
+                      <button onClick={() => prepararEdicionCita(cita)} className="flex items-center justify-center gap-2 py-3 bg-gray-100 text-negro-barber rounded-xl hover:bg-dorado transition font-bold">
+                        <FaCalendarDay /> Reprogramar
+                      </button>
+                    )}
+                    
+                    {cita.esExterno && (
+                      <div className="py-3 bg-gray-50 rounded-xl text-center border border-gray-100">
+                        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                          Modificar en App de Google
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )
           ) : tabActiva !== 'estadisticas' && (
             items.map(item => (
               <div key={item._id} className={`bg-white rounded-2rem shadow-sm border border-gray-100 overflow-hidden group transition-all ${item.activo === false ? 'opacity-70 grayscale-[50%]' : ''}`}>
@@ -438,14 +478,12 @@ function BarberDashboard() {
                       )}
                     </div>
 
-                    {/* 👇 SECCIÓN DE CONFIGURACIÓN AVANZADA (Para ambos: Servicios y Productos) */}
                     <div className="bg-gray-50 p-5 rounded-2xl border-2 border-gray-100 space-y-4">
                       <div className="flex items-center justify-between border-b border-gray-200 pb-3 mb-2">
                         <h4 className="text-xs font-black uppercase text-gray-400 tracking-widest">Opciones Avanzadas</h4>
                       </div>
                       
                       <div className="flex flex-col sm:flex-row gap-6">
-                        {/* Input de Orden (Más compacto) */}
                         <div className="flex-1">
                           <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest flex items-center justify-between">
                             Posición (Orden) <span className="text-gray-300 font-normal">0 es primero</span>
@@ -453,7 +491,6 @@ function BarberDashboard() {
                           <input type="number" value={form.orden} onChange={(e) => setForm({...form, orden: e.target.value})} className="w-full mt-1 p-3 bg-white border border-gray-200 rounded-xl focus:border-dorado focus:ring-1 focus:ring-dorado font-bold outline-none transition-all" />
                         </div>
                         
-                        {/* Checkbox de Oferta */}
                         <div className="flex-1 flex flex-col justify-center">
                           <label className="flex items-center gap-3 cursor-pointer mt-2 sm:mt-6 p-2 rounded-lg hover:bg-gray-100 transition-colors">
                             <input type="checkbox" checked={form.esOferta} onChange={(e) => setForm({...form, esOferta: e.target.checked})} className="w-5 h-5 accent-red-500 rounded cursor-pointer" />
@@ -464,7 +501,6 @@ function BarberDashboard() {
                         </div>
                       </div>
 
-                      {/* Input de Precio Anterior (Solo aparece si es oferta, con animación suave) */}
                       <div className={`transition-all duration-300 ease-in-out overflow-hidden ${form.esOferta ? 'max-h-24 opacity-100 mt-4' : 'max-h-0 opacity-0 m-0'}`}>
                         <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Precio Anterior (Se mostrará tachado)</label>
                         <div className="relative">
