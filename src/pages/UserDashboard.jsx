@@ -1,15 +1,24 @@
 // src/pages/UserDashboard.jsx
 import { useState, useEffect } from 'react';
 import api from '../api';
-import { FaScissors, FaCalendarDay, FaClock, FaX, FaTrash, FaPen, FaArrowLeft, FaWhatsapp, FaStar, FaGift, FaCheck } from 'react-icons/fa6';
+import { 
+  FaScissors, FaCalendarDay, FaClock, FaX, FaTrash, FaPen, 
+  FaArrowLeft, FaWhatsapp, FaStar, FaGift, FaCheck, FaLock // 👈 Agregamos FaLock
+} from 'react-icons/fa6';
 import { Link } from 'react-router-dom';
 
 function UserDashboard() {
   const [citas, setCitas] = useState([]);
   const [cargando, setCargando] = useState(true);
+  
+  // Estados para Modal de Reprogramar
   const [modalAbierto, setModalAbierto] = useState(false);
   const [citaAEditar, setCitaAEditar] = useState(null);
   const [form, setForm] = useState({ fechaHora: '', notas: '' });
+
+  // 👇 NUEVOS Estados para Modal de Contraseña
+  const [modalPasswordAbierto, setModalPasswordAbierto] = useState(false);
+  const [formPassword, setFormPassword] = useState({ actual: '', nueva: '' });
 
   const cargarCitas = async () => {
     try {
@@ -18,7 +27,6 @@ function UserDashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      // Ordenamos del más reciente al más antiguo
       const citasOrdenadas = res.data.sort((a, b) => {
         return new Date(b.fechaHora) - new Date(a.fechaHora);
       });
@@ -33,16 +41,10 @@ function UserDashboard() {
 
   useEffect(() => { cargarCitas(); }, []);
 
-  // --- LÓGICA DE SEPARACIÓN Y LEALTAD ---
   const ahora = new Date();
-  
-  // Separamos las citas
   const citasProximas = citas.filter(cita => new Date(cita.fechaHora) > ahora);
-  // Asumimos que las que ya pasaron son cortes completados
   const citasPasadas = citas.filter(cita => new Date(cita.fechaHora) <= ahora); 
-  
   const totalCortes = citasPasadas.length;
-  // Ciclos de 5 cortes (0 a 4). Si tiene 4, el progreso es 4.
   const progresoActual = totalCortes % 5; 
   const cortesParaPremio = 5 - progresoActual;
 
@@ -52,7 +54,6 @@ function UserDashboard() {
     return diferenciaHoras > 4;
   };
 
-  // ... (abrirModalReprogramar, confirmarCambio, cancelarCita se quedan exactamente igual)
   const abrirModalReprogramar = (cita) => {
     const date = new Date(cita.fechaHora);
     const offset = date.getTimezoneOffset() * 60000;
@@ -89,27 +90,53 @@ function UserDashboard() {
     }
   };
 
+  // 👇 NUEVA Función para enviar la nueva contraseña
+  const cambiarPassword = async (e) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const res = await api.put('/auth/cambiar-password', {
+        contrasenaActual: formPassword.actual,
+        nuevaContrasena: formPassword.nueva
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      
+      alert(res.data.mensaje);
+      setModalPasswordAbierto(false);
+      setFormPassword({ actual: '', nueva: '' });
+    } catch (err) {
+      alert(err.response?.data?.mensaje || "Error al cambiar la contraseña");
+    }
+  };
+
   if (cargando) return <div className="min-h-screen flex items-center justify-center bg-gray-100 font-black text-dorado animate-pulse">CARGANDO TU PERFIL...</div>;
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-10">
         
-        <header className="flex justify-between items-center">
+        <header className="flex justify-between items-start md:items-center flex-col md:flex-row gap-4">
           <div>
             <h1 className="text-3xl font-black text-negro-barber uppercase tracking-tighter">Mi <span className="text-dorado">Perfil</span></h1>
             <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Tus beneficios y agenda</p>
           </div>
-          <Link to="/" className="text-gray-400 hover:text-negro-barber transition font-black text-[10px] flex items-center gap-2 border-b border-transparent hover:border-negro-barber">
-            <FaArrowLeft /> VOLVER AL INICIO
-          </Link>
+          
+          {/* 👇 Modificamos este bloque para poner los dos botones juntos */}
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+            <button 
+              onClick={() => setModalPasswordAbierto(true)}
+              className="flex items-center gap-2 text-[10px] font-black tracking-widest uppercase bg-white px-4 py-2.5 rounded-lg text-gray-500 shadow-sm border border-gray-200 hover:text-dorado hover:border-dorado transition-all w-full sm:w-auto justify-center"
+            >
+              <FaLock /> Seguridad
+            </button>
+            <Link to="/" className="text-gray-400 hover:text-negro-barber transition font-black text-[10px] flex items-center gap-2 border-b border-transparent hover:border-negro-barber">
+              <FaArrowLeft /> VOLVER AL INICIO
+            </Link>
+          </div>
         </header>
 
         {/* --- SECCIÓN 1: TARJETA DE LEALTAD --- */}
         <section className="bg-negro-barber p-8 rounded-3xl shadow-xl border border-dorado/20 relative overflow-hidden">
-          {/* Fondo decorativo */}
           <FaStar className="absolute -right-10 -top-10 text-9xl text-dorado/5" />
-          
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="text-center md:text-left">
               <h2 className="text-dorado text-xs font-black tracking-[0.2em] uppercase mb-2">The Barber Studio 1225</h2>
@@ -121,7 +148,6 @@ function UserDashboard() {
               </p>
             </div>
 
-            {/* Los Sellos (Stamps) */}
             <div className="flex gap-3">
               {[1, 2, 3, 4, 5].map((sello) => {
                 const completado = sello <= progresoActual;
@@ -195,7 +221,7 @@ function UserDashboard() {
           )}
         </section>
 
-        {/* --- SECCIÓN 3: HISTORIAL (El Mismo de Siempre) --- */}
+        {/* --- SECCIÓN 3: HISTORIAL --- */}
         {citasPasadas.length > 0 && (
           <section>
             <h2 className="text-xl font-black text-gray-400 uppercase tracking-tighter mb-6 flex items-center gap-3">
@@ -224,8 +250,69 @@ function UserDashboard() {
           </section>
         )}
 
-        {/* --- MODAL PARA REPROGRAMAR (Se queda igual, no lo borres) --- */}
-        {/* ... (Pega aquí la parte del modalAbierto que ya tenías) ... */}
+        {/* --- MODAL PARA REPROGRAMAR --- */}
+        {modalAbierto && (
+          <div className="fixed inset-0 bg-negro-barber/90 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+            <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl relative">
+              <button onClick={() => setModalAbierto(false)} className="absolute top-6 right-6 text-gray-400 hover:text-negro-barber text-xl"><FaX /></button>
+              <h2 className="text-2xl font-black text-negro-barber mb-6 tracking-tighter uppercase italic">Reprogramar</h2>
+              
+              <form onSubmit={confirmarCambio} className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Nuevo Horario</label>
+                  <input type="datetime-local" required value={form.fechaHora} onChange={(e) => setForm({...form, fechaHora: e.target.value})} className="w-full mt-1 p-4 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-dorado focus:outline-none font-bold" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Notas Actualizadas</label>
+                  <textarea rows="2" value={form.notas} onChange={(e) => setForm({...form, notas: e.target.value})} className="w-full mt-1 p-4 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-dorado focus:outline-none font-medium" />
+                </div>
+                <button type="submit" className="w-full bg-negro-barber text-dorado py-4 rounded-xl font-black uppercase tracking-widest hover:bg-dorado hover:text-negro-barber transition-all shadow-xl mt-4">
+                  Confirmar Cambio
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* 👇 NUEVO: MODAL PARA CAMBIAR CONTRASEÑA --- */}
+        {modalPasswordAbierto && (
+          <div className="fixed inset-0 bg-negro-barber/90 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+            <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl relative animate-in zoom-in duration-300">
+              <button onClick={() => setModalPasswordAbierto(false)} className="absolute top-6 right-6 text-gray-400 hover:text-negro-barber text-xl"><FaX /></button>
+              <h2 className="text-2xl font-black text-negro-barber mb-2 tracking-tighter uppercase italic">Seguridad</h2>
+              <p className="text-gray-400 text-xs font-bold mb-6">Actualiza tu contraseña de acceso</p>
+              
+              <form onSubmit={cambiarPassword} className="space-y-4">
+                <div>
+                  <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Contraseña Actual</label>
+                  <input 
+                    type="password" 
+                    required 
+                    value={formPassword.actual} 
+                    onChange={(e) => setFormPassword({...formPassword, actual: e.target.value})} 
+                    className="w-full mt-1 p-4 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-dorado focus:outline-none font-bold" 
+                    placeholder="••••••••"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Nueva Contraseña</label>
+                  <input 
+                    type="password" 
+                    required 
+                    minLength="6"
+                    value={formPassword.nueva} 
+                    onChange={(e) => setFormPassword({...formPassword, nueva: e.target.value})} 
+                    className="w-full mt-1 p-4 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-dorado focus:outline-none font-bold" 
+                    placeholder="Mínimo 6 caracteres"
+                  />
+                </div>
+                <button type="submit" className="w-full bg-negro-barber text-dorado py-4 rounded-xl font-black uppercase tracking-widest hover:bg-dorado hover:text-negro-barber transition-all shadow-xl mt-4">
+                  Guardar Contraseña
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
