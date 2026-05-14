@@ -87,8 +87,8 @@ function Reservar() {
             return (tiempoActual.getTime() < ocupadoFin && finDelTurnoPosible.getTime() > ocupadoInicio);
           });
 
-          // 3. Solo agregamos el botón si faltan > 4 horas Y NO choca con Google Calendar
-          if (diferenciaHoras >= 4 && !hayChoque) {
+          // 3. Solo agregamos el botón si faltan > 1 hora Y NO choca con Google Calendar
+          if (diferenciaHoras >= 1 && !hayChoque) {
             const horasStr = tiempoActual.getHours().toString().padStart(2, '0');
             const minutosStr = tiempoActual.getMinutes().toString().padStart(2, '0');
             horariosDisponibles.push(`${horasStr}:${minutosStr}`);
@@ -119,8 +119,8 @@ function Reservar() {
     const ahora = new Date();
     const diferenciaHoras = (fechaSeleccionada - ahora) / (1000 * 60 * 60);
 
-    if (diferenciaHoras < 4) {
-      setMensaje({ texto: 'Por favor, agenda con al menos 4 horas de anticipación.', tipo: 'error' });
+    if (diferenciaHoras < 1) {
+      setMensaje({ texto: 'Por favor, agenda con al menos 1 hora de anticipación.', tipo: 'error' });
       return;
     }
 
