@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
 import { Link } from 'react-router-dom';
-import { FaWhatsapp, FaInstagram, FaPhone } from 'react-icons/fa6';
+import { FaWhatsapp, FaFacebook, FaPhone } from 'react-icons/fa6';
 
 function Home() {
   const [servicios, setServicios] = useState([]);
@@ -274,8 +274,8 @@ function Home() {
             <a href="https://wa.me/5213318688146" target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-green-500 transition-colors">
               <FaWhatsapp className="text-2xl" /> WhatsApp
             </a>
-            <a href="#" className="flex items-center gap-2 hover:text-pink-500 transition-colors">
-              <FaInstagram className="text-2xl" /> Instagram
+            <a href="https://www.facebook.com/profile.php?id=61584636415745" target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-pink-500 transition-colors">
+              <FaFacebook className="text-2xl" /> Facebook
             </a>
           </div>
           <p className="text-xs pt-8 text-gray-600 border-t border-gray-900">
