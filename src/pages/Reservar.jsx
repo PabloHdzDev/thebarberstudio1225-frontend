@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { FaCalendarDays, FaClock, FaArrowLeft, FaPen } from 'react-icons/fa6';
+import { FaCalendarDays, FaClock, FaArrowLeft, FaPen, FaGift } from 'react-icons/fa6';
 import api from '../api';
 
 function Reservar() {
@@ -14,11 +14,21 @@ function Reservar() {
   const [mensaje, setMensaje] = useState({ texto: '', tipo: '' });
   
   const [horariosDinamicos, setHorariosDinamicos] = useState([]);
-  const [cargandoHoras, setCargandoHoras] = useState(false); // 👈 Nuevo estado
+  const [cargandoHoras, setCargandoHoras] = useState(false);
+  
+  // 👇 NUEVO: Estado para saber si está canjeando su premio
+  const [esPremio, setEsPremio] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) navigate('/login');
+
+    // Revisamos si el usuario viene de hacer clic en el botón de premio
+    if (localStorage.getItem('canjearPremio') === 'true') {
+      setEsPremio(true);
+      // Pre-llenamos las notas para que el barbero sepa por qué le cobrará menos
+      setNotas('🎁 PREMIO DE LEALTAD: 50% de descuento aplicable al pagar.');
+    }
   }, [navigate]);
 
   useEffect(() => {
@@ -50,22 +60,20 @@ function Reservar() {
     }
   };
 
-  // 👈 LÓGICA MAGISTRAL: Hablar con Google Calendar antes de pintar
   useEffect(() => {
     if (!fecha || !servicio) return;
 
     const generarHorarios = async () => {
       setCargandoHoras(true);
-      setHorariosDinamicos([]); // Limpiamos los previos
+      setHorariosDinamicos([]); 
       setMensaje({ texto: '', tipo: '' });
 
       try {
         const token = localStorage.getItem('token');
-        // 1. Preguntamos a nuestro nuevo endpoint qué horas están ocupadas hoy
         const res = await api.get(`/citas/disponibilidad/${fecha}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        const bloquesOcupados = res.data; // [{start: '...', end: '...'}, ...]
+        const bloquesOcupados = res.data; 
 
         const horariosDisponibles = [];
         const ahora = new Date();
@@ -78,16 +86,12 @@ function Reservar() {
           const finDelTurnoPosible = new Date(tiempoActual.getTime() + duracionMs);
           const diferenciaHoras = (tiempoActual - ahora) / (1000 * 60 * 60);
 
-          // 2. Revisamos si este turno choca con ALGÚN evento de Google Calendar
           const hayChoque = bloquesOcupados.some(bloque => {
             const ocupadoInicio = new Date(bloque.start).getTime();
             const ocupadoFin = new Date(bloque.end).getTime();
-            
-            // Lógica de colisión de tiempo
             return (tiempoActual.getTime() < ocupadoFin && finDelTurnoPosible.getTime() > ocupadoInicio);
           });
 
-          // 3. Solo agregamos el botón si faltan > 1 hora Y NO choca con Google Calendar
           if (diferenciaHoras >= 1 && !hayChoque) {
             const horasStr = tiempoActual.getHours().toString().padStart(2, '0');
             const minutosStr = tiempoActual.getMinutes().toString().padStart(2, '0');
@@ -137,6 +141,9 @@ function Reservar() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
+      // 👇 Borramos la banderita del premio para que no se le aplique al siguiente corte
+      localStorage.removeItem('canjearPremio');
+
       setMensaje({ texto: '¡Cita agendada con éxito! Te esperamos.', tipo: 'exito' });
       setTimeout(() => navigate('/perfil'), 2500);
 
@@ -148,6 +155,10 @@ function Reservar() {
     }
   };
 
+  const cancelarReserva = () => {
+    localStorage.removeItem('canjearPremio'); // Limpiamos por si se arrepiente
+  };
+
   if (!servicio) return <div className="min-h-screen bg-negro-barber flex items-center justify-center text-dorado font-bold">CARGANDO SERVICIO...</div>;
 
   return (
@@ -157,7 +168,25 @@ function Reservar() {
         <div className="bg-negro-barber p-8 text-center border-b-4 border-dorado">
           <h2 className="text-dorado text-xs font-black tracking-[0.2em] uppercase mb-2">Reserva tu experiencia</h2>
           <h1 className="text-white text-3xl font-bold">{servicio.nombre}</h1>
-          <p className="text-gray-400 mt-2 font-medium">${servicio.precio} MXN • {servicio.duracionMinutos} min</p>
+          
+          {/* 👇 Lógica visual para mostrar el descuento */}
+          <p className="text-gray-400 mt-2 font-medium">
+            {esPremio ? (
+              <>
+                <span className="line-through text-gray-500 mr-2">${servicio.precio}</span>
+                <span className="text-dorado font-black">${servicio.precio / 2} MXN</span>
+              </>
+            ) : (
+              `$${servicio.precio} MXN`
+            )} 
+            {' '}• {servicio.duracionMinutos} min
+          </p>
+
+          {esPremio && (
+            <div className="mt-3 bg-dorado text-negro-barber text-[10px] font-black uppercase tracking-widest py-1.5 px-4 rounded-full inline-flex items-center gap-2">
+              <FaGift /> PREMIO 50% OFF APLICADO
+            </div>
+          )}
         </div>
 
         <form onSubmit={manejarEnvio} className="p-8">
@@ -185,14 +214,12 @@ function Reservar() {
             />
           </div>
 
-          {/* ESTADO DE CARGA DE HORARIOS */}
           {cargandoHoras && (
             <div className="flex justify-center my-8">
               <div className="w-8 h-8 border-4 border-gray-200 border-t-dorado rounded-full animate-spin"></div>
             </div>
           )}
 
-          {/* MOSTRAR BOTONES SI HAY DISPONIBILIDAD */}
           {fecha && !cargandoHoras && horariosDinamicos.length > 0 && (
             <div className="mb-6 animate-in fade-in duration-300">
               <label className="flex items-center gap-2 text-negro-barber font-black text-xs uppercase tracking-widest mb-3">
@@ -239,7 +266,7 @@ function Reservar() {
           </button>
 
           <div className="text-center mt-6">
-            <Link to="/" className="inline-flex items-center gap-2 text-gray-400 hover:text-red-500 transition font-black text-[10px] tracking-widest uppercase">
+            <Link to="/" onClick={cancelarReserva} className="inline-flex items-center gap-2 text-gray-400 hover:text-red-500 transition font-black text-[10px] tracking-widest uppercase">
               <FaArrowLeft /> CANCELAR
             </Link>
           </div>

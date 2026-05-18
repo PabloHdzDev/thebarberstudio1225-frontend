@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import api from '../api';
 import { 
   FaScissors, FaCalendarDay, FaClock, FaX, FaTrash, FaPen, 
-  FaArrowLeft, FaWhatsapp, FaStar, FaGift, FaCheck, FaLock // 👈 Agregamos FaLock
+  FaArrowLeft, FaWhatsapp, FaStar, FaGift, FaCheck, FaLock 
 } from 'react-icons/fa6';
 import { Link } from 'react-router-dom';
 
@@ -16,7 +16,7 @@ function UserDashboard() {
   const [citaAEditar, setCitaAEditar] = useState(null);
   const [form, setForm] = useState({ fechaHora: '', notas: '' });
 
-  // 👇 NUEVOS Estados para Modal de Contraseña
+  // Estados para Modal de Contraseña
   const [modalPasswordAbierto, setModalPasswordAbierto] = useState(false);
   const [formPassword, setFormPassword] = useState({ actual: '', nueva: '' });
 
@@ -45,7 +45,17 @@ function UserDashboard() {
   const citasProximas = citas.filter(cita => new Date(cita.fechaHora) > ahora);
   const citasPasadas = citas.filter(cita => new Date(cita.fechaHora) <= ahora); 
   const totalCortes = citasPasadas.length;
-  const progresoActual = totalCortes % 5; 
+  
+  // 👇 NUEVA LÓGICA DE PREMIOS MEJORADA
+  let progresoActual = totalCortes % 5; 
+  let premioDisponible = false;
+
+  // Si tiene un múltiplo de 5 y ya fue a todos, le mostramos la tarjeta llena
+  if (totalCortes > 0 && progresoActual === 0) {
+    progresoActual = 5; 
+    premioDisponible = true; 
+  }
+
   const cortesParaPremio = 5 - progresoActual;
 
   const esEditable = (fechaHoraCita) => {
@@ -90,7 +100,6 @@ function UserDashboard() {
     }
   };
 
-  // 👇 NUEVA Función para enviar la nueva contraseña
   const cambiarPassword = async (e) => {
     e.preventDefault();
     try {
@@ -120,7 +129,6 @@ function UserDashboard() {
             <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Tus beneficios y agenda</p>
           </div>
           
-          {/* 👇 Modificamos este bloque para poner los dos botones juntos */}
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
             <button 
               onClick={() => setModalPasswordAbierto(true)}
@@ -141,21 +149,31 @@ function UserDashboard() {
             <div className="text-center md:text-left">
               <h2 className="text-dorado text-xs font-black tracking-[0.2em] uppercase mb-2">The Barber Studio 1225</h2>
               <h3 className="text-white text-2xl font-bold mb-1">
-                {cortesParaPremio === 1 ? '¡Tu próximo corte es a MITAD DE PRECIO!' : `Faltan ${cortesParaPremio} cortes para tu premio`}
+                {premioDisponible ? '¡Tu premio está listo!' : `Faltan ${cortesParaPremio} cortes para tu premio`}
               </h3>
-              <p className="text-gray-400 text-sm">
+              <p className="text-gray-400 text-sm mb-4">
                 Has completado {totalCortes} {totalCortes === 1 ? 'corte' : 'cortes'} históricos.
               </p>
+              
+              {premioDisponible && (
+                <Link 
+                  to="/" 
+                  onClick={() => localStorage.setItem('canjearPremio', 'true')}
+                  className="inline-flex items-center justify-center gap-2 bg-dorado text-negro-barber px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all shadow-lg shadow-dorado/20 w-full md:w-auto"
+                >
+                  <FaGift className="text-lg" /> Agendar con 50% OFF
+                </Link>
+              )}
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3">
               {[1, 2, 3, 4, 5].map((sello) => {
                 const completado = sello <= progresoActual;
                 const esPremio = sello === 5;
                 return (
                   <div 
                     key={sello} 
-                    className={`w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold transition-all
+                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-lg sm:text-xl font-bold transition-all
                       ${completado ? 'bg-dorado text-negro-barber shadow-lg shadow-dorado/40 scale-110' : 'bg-gray-800 text-gray-600 border border-gray-700'}
                       ${esPremio && !completado ? 'border-dorado text-dorado' : ''}
                     `}
@@ -274,7 +292,7 @@ function UserDashboard() {
           </div>
         )}
 
-        {/* 👇 NUEVO: MODAL PARA CAMBIAR CONTRASEÑA --- */}
+        {/* MODAL PARA CAMBIAR CONTRASEÑA --- */}
         {modalPasswordAbierto && (
           <div className="fixed inset-0 bg-negro-barber/90 backdrop-blur-sm flex justify-center items-center z-50 p-4">
             <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl relative animate-in zoom-in duration-300">
