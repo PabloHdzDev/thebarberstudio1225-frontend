@@ -1,5 +1,5 @@
 import React from 'react';
-import interiorImg from '../assets/blog/BarberiaZapopan/interiorBarberia.webp';
+import interiorImg from '../assets/blog/BarberiaZapopan/InteriorBarberia.webp';
 import reservacionImg from '../assets/blog/BarberiaZapopan/Reservacion.webp';
 import serviciosImg from '../assets/blog/BarberiaZapopan/Servicios.webp';
 import asesoriaImg from '../assets/blog/BarberiaZapopan/Asesoria.webp';
