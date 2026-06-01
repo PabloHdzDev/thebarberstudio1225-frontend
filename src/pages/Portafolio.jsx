@@ -27,7 +27,7 @@ function Portafolio() {
               <img 
                 src={item.url} 
                 alt={item.tag} 
-                className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700 group-hover:scale-110"
+                className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-linear-to-t from-negro-barber via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-8">
                 <span className="text-dorado font-bold text-xl tracking-wider">{item.tag}</span>
