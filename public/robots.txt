@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://thebarberstudio1225.vercel.app/sitemap.xml
+Sitemap: https://thebarberstudio1225.vercel.app/sitemap-main.xml
