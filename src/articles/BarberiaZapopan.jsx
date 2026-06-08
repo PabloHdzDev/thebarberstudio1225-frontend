@@ -12,8 +12,8 @@ import final from '../assets/blog/BarberiaZapopan/Final.webp';
 
 export const meta = {
   id: "barberia-en-zapopan-que-buscar",
-  titulo: "Barbería en Zapopan: qué buscar antes de elegir una",
-  resumen: "Conoce los detalles que distinguen a una buena barbería en Zapopan: higiene, atención, estilo, reservación fácil y experiencia profesional.",
+  titulo: "Barbería en Tlajomulco: qué buscar antes de elegir una",
+  resumen: "Conoce los detalles que distinguen a una buena barbería en Tlajomulco: higiene, atención, estilo, reservación fácil y experiencia profesional.",
   imagenMiniatura: "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=500&auto=format&fit=crop&q=60",
   imagenPortada: "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1200",
 };
@@ -51,7 +51,7 @@ export default function BarberiaZapopan() {
   return (
     <>
       <p>
-        Elegir una <b>barbería en Zapopan</b> no debería depender solo de cuál queda más cerca o cuál tiene el precio más bajo. Un buen corte también depende de la higiene, la atención, la experiencia del barbero y la confianza que te da el lugar desde el primer momento.
+        Elegir una <b>barbería en Tlajomulco</b> no debería depender solo de cuál queda más cerca o cuál tiene el precio más bajo. Un buen corte también depende de la higiene, la atención, la experiencia del barbero y la confianza que te da el lugar desde el primer momento.
       </p>
 
       <p>
@@ -219,7 +219,7 @@ export default function BarberiaZapopan() {
         La comodidad de reservar en línea, revisar servicios, ver productos y recibir una atención personalizada puede hacer que todo el proceso sea más fácil y confiable.
       </p>
 
-      <h3>The Barber Studio 1225 en Zapopan</h3>
+      <h3>The Barber Studio 1225 en Los Tulipanes</h3>
 
       <p>
         En <b>The Barber Studio 1225</b> buscamos ofrecer una experiencia limpia, organizada y enfocada en tu estilo personal. Puedes revisar nuestros servicios, elegir el que mejor se adapte a ti y reservar tu cita de forma sencilla.
@@ -238,7 +238,7 @@ export default function BarberiaZapopan() {
       <h3>Consejo final de barbería</h3>
 
       <p>
-        Si estás buscando una barbería en Zapopan, no elijas solo por cercanía. Fíjate en la limpieza, la atención, la facilidad para agendar, los servicios disponibles y la confianza que te transmite el lugar.
+        Si estás buscando una barbería en Tlajomulco, no elijas solo por cercanía. Fíjate en la limpieza, la atención, la facilidad para agendar, los servicios disponibles y la confianza que te transmite el lugar.
       </p>
 
       <p>
