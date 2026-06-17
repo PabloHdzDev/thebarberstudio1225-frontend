@@ -46,18 +46,9 @@ function Reservar() {
 
   const manejarCambioFecha = (e) => {
     const fechaSeleccionada = e.target.value;
-    const fechaObj = new Date(`${fechaSeleccionada}T12:00:00`);
-    
-    if (fechaObj.getDay() === 3) {
-      setMensaje({ texto: 'Los miércoles descansamos. Por favor, elige otro día.', tipo: 'error' });
-      setFecha('');
-      setHorariosDinamicos([]);
-      setHora('');
-    } else {
-      setMensaje({ texto: '', tipo: '' });
-      setFecha(fechaSeleccionada);
-      setHora('');
-    }
+    setMensaje({ texto: '', tipo: '' });
+    setFecha(fechaSeleccionada);
+    setHora('');
   };
 
   useEffect(() => {
@@ -77,9 +68,10 @@ function Reservar() {
 
         const horariosDisponibles = [];
         const ahora = new Date();
-        
-        let tiempoActual = new Date(`${fecha}T11:00:00`);
-        const tiempoCierre = new Date(`${fecha}T19:00:00`);
+
+        const esMiercoles = new Date(`${fecha}T12:00:00`).getDay() === 3;
+        let tiempoActual = new Date(`${fecha}T${esMiercoles ? '16:00:00' : '11:00:00'}`);
+        const tiempoCierre = new Date(`${fecha}T${esMiercoles ? '21:00:00' : '20:00:00'}`);
         const duracionMs = servicio.duracionMinutos * 60000;
 
         while (tiempoActual.getTime() + duracionMs <= tiempoCierre.getTime()) {
