@@ -123,17 +123,19 @@ function Reservar() {
     setMensaje({ texto: 'Procesando tu lugar...', tipo: 'info' });
 
     try {
-      const token = localStorage.getItem('token'); 
-      await api.post('/citas', 
-        { 
-          servicio: id, 
+      const token = localStorage.getItem('token');
+      await api.post('/citas',
+        {
+          servicio: id,
           fechaHora: fechaSeleccionada.toISOString(),
-          notas: notas 
+          notas: notas,
+          // El backend valida que el usuario tenga premioPendiente=true antes de aceptar esto
+          esPremio: esPremio
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // 👇 Borramos la banderita del premio para que no se le aplique al siguiente corte
+      // Limpiamos el flag de localStorage (el backend ya limpió premioPendiente en BD)
       localStorage.removeItem('canjearPremio');
 
       setMensaje({ texto: '¡Cita agendada con éxito! Te esperamos.', tipo: 'exito' });
