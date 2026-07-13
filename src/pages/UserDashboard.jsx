@@ -218,16 +218,12 @@ function UserDashboard() {
             )}
 
             {/* Stats del cliente */}
-            <div className="grid grid-cols-3 gap-3 pt-4 border-t border-white/10">
+            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/10">
               <div className="text-center">
                 <p className="text-dorado text-lg md:text-2xl font-black">{totalVisitas}</p>
                 <p className="text-gray-500 text-[9px] uppercase tracking-widest">Visitas totales</p>
               </div>
-              <div className="text-center border-x border-white/10">
-                <p className="text-dorado text-lg md:text-2xl font-black">${totalGastado}</p>
-                <p className="text-gray-500 text-[9px] uppercase tracking-widest">Total gastado</p>
-              </div>
-              <div className="text-center">
+              <div className="text-center border-l border-white/10">
                 <p className="text-dorado text-xs md:text-sm font-black">
                   {ultimaVisita
                     ? ultimaVisita.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
