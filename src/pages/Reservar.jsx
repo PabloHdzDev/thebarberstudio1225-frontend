@@ -3,6 +3,17 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FaCalendarDays, FaClock, FaArrowLeft, FaPen, FaGift } from 'react-icons/fa6';
 import api from '../api';
 
+// Horario de atención por día de la semana (0 = domingo, 6 = sábado)
+const HORARIOS_BARBERIA = {
+  0: { apertura: '13:00:00', cierre: '17:00:00' }, // Domingo
+  1: { apertura: '11:00:00', cierre: '19:00:00' }, // Lunes
+  2: { apertura: '11:00:00', cierre: '20:00:00' }, // Martes
+  3: { apertura: '15:00:00', cierre: '20:00:00' }, // Miércoles
+  4: { apertura: '11:00:00', cierre: '20:00:00' }, // Jueves
+  5: { apertura: '11:00:00', cierre: '20:00:00' }, // Viernes
+  6: { apertura: '11:00:00', cierre: '20:00:00' }, // Sábado
+};
+
 function Reservar() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -69,9 +80,11 @@ function Reservar() {
         const horariosDisponibles = [];
         const ahora = new Date();
 
-        const esMiercoles = new Date(`${fecha}T12:00:00`).getDay() === 3;
-        let tiempoActual = new Date(`${fecha}T${esMiercoles ? '16:00:00' : '11:00:00'}`);
-        const tiempoCierre = new Date(`${fecha}T${esMiercoles ? '21:00:00' : '20:00:00'}`);
+        const diaSemana = new Date(`${fecha}T12:00:00`).getDay();
+        const horario = HORARIOS_BARBERIA[diaSemana];
+
+        let tiempoActual = new Date(`${fecha}T${horario.apertura}`);
+        const tiempoCierre = new Date(`${fecha}T${horario.cierre}`);
         const duracionMs = servicio.duracionMinutos * 60000;
 
         while (tiempoActual.getTime() + duracionMs <= tiempoCierre.getTime()) {

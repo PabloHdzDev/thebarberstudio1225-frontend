@@ -89,7 +89,7 @@ function Articulo() {
               ¿Inspirado por este artículo?
             </h4>
             <p className="text-gray-500 text-sm md:text-base mb-8 max-w-md mx-auto">
-              Ponemos en práctica estos consejos todos los días. Agenda tu cita en Zapopan y deja tu imagen en manos de profesionales.
+              Ponemos en práctica estos consejos todos los días. Agenda tu cita en Los Tulipanes, Guadalajara y deja tu imagen en manos de profesionales.
             </p>
             <Link 
               to="/" 

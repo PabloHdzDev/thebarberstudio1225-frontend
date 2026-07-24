@@ -1,19 +1,19 @@
 import React from 'react';
-import interiorImg from '../assets/blog/BarberiaZapopan/InteriorBarberia.webp';
-import reservacionImg from '../assets/blog/BarberiaZapopan/Reservacion.webp';
-import serviciosImg from '../assets/blog/BarberiaZapopan/Servicios.webp';
-import asesoriaImg from '../assets/blog/BarberiaZapopan/Asesoria.webp';
-import detallesImg from '../assets/blog/BarberiaZapopan/Detalles.webp';
-import presenciaImg from '../assets/blog/BarberiaZapopan/Presencia.webp';
-import resenasImg from '../assets/blog/BarberiaZapopan/Resenas.webp';
-import final from '../assets/blog/BarberiaZapopan/Final.webp';
+import interiorImg from '../assets/blog/BarberiaLosTulipanes/InteriorBarberia.webp';
+import reservacionImg from '../assets/blog/BarberiaLosTulipanes/Reservacion.webp';
+import serviciosImg from '../assets/blog/BarberiaLosTulipanes/Servicios.webp';
+import asesoriaImg from '../assets/blog/BarberiaLosTulipanes/Asesoria.webp';
+import detallesImg from '../assets/blog/BarberiaLosTulipanes/Detalles.webp';
+import presenciaImg from '../assets/blog/BarberiaLosTulipanes/Presencia.webp';
+import resenasImg from '../assets/blog/BarberiaLosTulipanes/Resenas.webp';
+import final from '../assets/blog/BarberiaLosTulipanes/Final.webp';
 
 
 
 export const meta = {
-  id: "barberia-en-zapopan-que-buscar",
-  titulo: "Barbería en Tlajomulco: qué buscar antes de elegir una",
-  resumen: "Conoce los detalles que distinguen a una buena barbería en Tlajomulco: higiene, atención, estilo, reservación fácil y experiencia profesional.",
+  id: "barberia-en-los-tulipanes-que-buscar",
+  titulo: "Barbería en Los Tulipanes, Guadalajara: qué buscar antes de elegir una",
+  resumen: "Conoce los detalles que distinguen a una buena barbería en Los Tulipanes, Guadalajara: higiene, atención, estilo, reservación fácil y experiencia profesional.",
   imagenMiniatura: "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=500&auto=format&fit=crop&q=60",
   imagenPortada: "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1200",
 };
@@ -45,13 +45,13 @@ function ArticleImage({ src, alt, caption, contain = false }) {
   );
 }
 
-export default function BarberiaZapopan() {
+export default function BarberiaLosTulipanes() {
   const ejemploStudio = "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=800";
 
   return (
     <>
       <p>
-        Elegir una <b>barbería en Tlajomulco</b> no debería depender solo de cuál queda más cerca o cuál tiene el precio más bajo. Un buen corte también depende de la higiene, la atención, la experiencia del barbero y la confianza que te da el lugar desde el primer momento.
+        Elegir una <b>barbería en Los Tulipanes, Guadalajara</b> no debería depender solo de cuál queda más cerca o cuál tiene el precio más bajo. Un buen corte también depende de la higiene, la atención, la experiencia del barbero y la confianza que te da el lugar desde el primer momento.
       </p>
 
       <p>
@@ -219,10 +219,14 @@ export default function BarberiaZapopan() {
         La comodidad de reservar en línea, revisar servicios, ver productos y recibir una atención personalizada puede hacer que todo el proceso sea más fácil y confiable.
       </p>
 
-      <h3>The Barber Studio 1225 en Los Tulipanes</h3>
+      <h3>The Barber Studio 1225 en Los Tulipanes, Guadalajara</h3>
 
       <p>
         En <b>The Barber Studio 1225</b> buscamos ofrecer una experiencia limpia, organizada y enfocada en tu estilo personal. Puedes revisar nuestros servicios, elegir el que mejor se adapte a ti y reservar tu cita de forma sencilla.
+      </p>
+
+      <p>
+        Nos encuentras en <b>Av. La Tijera 1225, Los Tulipanes, 45647 Guadalajara, Jalisco</b>, con acceso fácil desde Zapopan y Tlajomulco. Puedes comunicarte al <b>33 1868 8146</b> o agendar directamente desde este sitio.
       </p>
 
       <p>
@@ -238,7 +242,7 @@ export default function BarberiaZapopan() {
       <h3>Consejo final de barbería</h3>
 
       <p>
-        Si estás buscando una barbería en Tlajomulco, no elijas solo por cercanía. Fíjate en la limpieza, la atención, la facilidad para agendar, los servicios disponibles y la confianza que te transmite el lugar.
+        Si estás buscando una barbería en Los Tulipanes o el sur de Guadalajara, no elijas solo por cercanía. Fíjate en la limpieza, la atención, la facilidad para agendar, los servicios disponibles y la confianza que te transmite el lugar.
       </p>
 
       <p>

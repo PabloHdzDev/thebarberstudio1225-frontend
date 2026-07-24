@@ -1,7 +1,7 @@
 {
   "headers": [
     {
-      "source": "/sitemap.xml",
+      "source": "/sitemap-main.xml",
       "headers": [
         {
           "key": "Content-Type",
@@ -19,9 +19,16 @@
       ]
     }
   ],
+  "redirects": [
+    {
+      "source": "/blog/barberia-en-zapopan-que-buscar",
+      "destination": "/blog/barberia-en-los-tulipanes-que-buscar",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
-      "source": "/((?!sitemap.xml|robots.txt).*)",
+      "source": "/((?!sitemap-main\\.xml|robots\\.txt).*)",
       "destination": "/index.html"
     }
   ]
