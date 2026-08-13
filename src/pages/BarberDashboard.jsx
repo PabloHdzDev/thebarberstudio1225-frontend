@@ -3,7 +3,7 @@ import api from '../api';
 import {
   FaPlus, FaCamera, FaScissors, FaBoxOpen, FaX, FaTrash,
   FaPenToSquare, FaCircleCheck, FaCircleExclamation, FaCalendarCheck,
-  FaWhatsapp, FaCalendarDay, FaBars, FaEyeSlash, FaChartPie,
+  FaWhatsapp, FaCalendarDay, FaBars, FaEyeSlash, FaChartPie, FaClock,
   FaMoneyBillTrendUp, FaUsers, FaChartColumn, FaGift, FaFire,
   FaTrophy, FaUserPlus, FaUserClock, FaMagnifyingGlass,
   FaLock, FaLockOpen, FaArrowRotateLeft, FaChevronLeft, FaChevronRight,
@@ -12,6 +12,8 @@ import {
 import { io } from 'socket.io-client';
 
 const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
+
+const DIAS_SEMANA = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
 const NIVELES = {
   nuevo:     { label: 'Nuevo',     color: 'bg-gray-100 text-gray-500' },
@@ -36,6 +38,9 @@ function BarberDashboard() {
   const [dirOrden, setDirOrden] = useState('nombre');
   const [cargandoDir, setCargandoDir] = useState(false);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
+
+  const [horarios, setHorarios] = useState([]);
+  const [guardandoHorarios, setGuardandoHorarios] = useState(false);
 
   const [tabActiva, setTabActiva] = useState('citas');
   const [filtroCitas, setFiltroCitas] = useState('proximas');
@@ -86,6 +91,12 @@ function BarberDashboard() {
         return;
       }
 
+      if (tabActiva === 'horarios') {
+        const res = await api.get('/horarios');
+        setHorarios(res.data);
+        return;
+      }
+
       if (tabActiva === 'estadisticas') {
         const res = await api.get('/citas', { headers: { Authorization: `Bearer ${token}` } });
         setCitas(res.data);
@@ -132,6 +143,36 @@ function BarberDashboard() {
       if (clienteSeleccionado?._id === id) setClienteSeleccionado(res.data.usuario);
     } catch (err) {
       mostrarNotificacion(err.response?.data?.mensaje || 'Error al ejecutar la acción', 'error');
+    }
+  };
+
+  const cambiarHorario = (diaSemana, campo, valor) => {
+    setHorarios(prev => prev.map(h =>
+      h.diaSemana === diaSemana ? { ...h, [campo]: valor } : h
+    ));
+  };
+
+  const guardarHorarios = async () => {
+    // Validamos antes de mandar para dar el error en el día exacto
+    for (const h of horarios) {
+      if (h.abierto && h.apertura >= h.cierre) {
+        mostrarNotificacion(`${DIAS_SEMANA[h.diaSemana]}: la apertura debe ser antes del cierre`, 'error');
+        return;
+      }
+    }
+
+    setGuardandoHorarios(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await api.put('/horarios', { horarios }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setHorarios(res.data.horarios);
+      mostrarNotificacion('Horarios actualizados. Ya aplican para nuevas reservas.');
+    } catch (err) {
+      mostrarNotificacion(err.response?.data?.mensaje || 'Error al guardar los horarios', 'error');
+    } finally {
+      setGuardandoHorarios(false);
     }
   };
 
@@ -267,6 +308,7 @@ function BarberDashboard() {
     { id: 'estadisticas', icon: <FaChartPie />,      label: 'Estadísticas' },
     { id: 'servicios',    icon: <FaScissors />,       label: 'Servicios' },
     { id: 'productos',    icon: <FaBoxOpen />,        label: 'Productos' },
+    { id: 'horarios',     icon: <FaClock />,          label: 'Horarios' },
   ];
 
   return (
@@ -313,10 +355,11 @@ function BarberDashboard() {
             {tabActiva === 'citas' && 'Agenda en Vivo'}
             {tabActiva === 'clientes' && <>Gestión de <span className="text-dorado">Clientes</span></>}
             {tabActiva === 'estadisticas' && 'Rendimiento'}
+            {tabActiva === 'horarios' && <>Mis <span className="text-dorado">Horarios</span></>}
             {(tabActiva === 'servicios' || tabActiva === 'productos') && <>Gestión de <span className="text-dorado">{tabActiva}</span></>}
           </h1>
 
-          {tabActiva !== 'estadisticas' && tabActiva !== 'clientes' && (
+          {tabActiva !== 'estadisticas' && tabActiva !== 'clientes' && tabActiva !== 'horarios' && (
             <button
               onClick={tabActiva === 'citas' ? abrirModalNuevaCita : () => setMostrarForm(true)}
               className="w-full sm:w-auto bg-negro-barber text-dorado px-6 py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-xl"
@@ -720,6 +763,97 @@ function BarberDashboard() {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════
+            TAB: HORARIOS
+        ══════════════════════════════════════ */}
+        {tabActiva === 'horarios' && (
+          <div className="animate-in fade-in duration-500 max-w-3xl">
+            <div className="bg-white rounded-2xl shadow-sm p-6 md:p-8">
+              <div className="mb-6">
+                <h3 className="font-black text-negro-barber uppercase tracking-tight text-lg flex items-center gap-2">
+                  <FaClock className="text-dorado" /> Horario de atención
+                </h3>
+                <p className="text-sm text-gray-400 mt-1">
+                  Define a qué hora abres y cierras cada día. Los cambios aplican de inmediato
+                  a las nuevas reservas; las citas ya agendadas no se modifican.
+                </p>
+              </div>
+
+              {horarios.length === 0 ? (
+                <div className="flex justify-center py-12">
+                  <div className="w-8 h-8 border-4 border-gray-200 border-t-dorado rounded-full animate-spin" />
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    {horarios.map(h => (
+                      <div
+                        key={h.diaSemana}
+                        className={`flex flex-wrap items-center gap-3 p-4 rounded-xl border transition-colors ${
+                          h.abierto ? 'bg-white border-gray-100' : 'bg-gray-50 border-gray-100'
+                        }`}
+                      >
+                        <span className={`w-24 font-black text-sm ${h.abierto ? 'text-negro-barber' : 'text-gray-400'}`}>
+                          {DIAS_SEMANA[h.diaSemana]}
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={() => cambiarHorario(h.diaSemana, 'abierto', !h.abierto)}
+                          className={`relative w-12 h-6 rounded-full transition-colors shrink-0 ${
+                            h.abierto ? 'bg-dorado' : 'bg-gray-300'
+                          }`}
+                          aria-label={h.abierto ? 'Marcar como cerrado' : 'Marcar como abierto'}
+                        >
+                          <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all ${
+                            h.abierto ? 'left-7' : 'left-1'
+                          }`} />
+                        </button>
+
+                        {h.abierto ? (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="time"
+                              value={h.apertura}
+                              onChange={e => cambiarHorario(h.diaSemana, 'apertura', e.target.value)}
+                              className="border-2 border-gray-100 bg-gray-50 rounded-xl px-3 py-2 text-sm font-bold focus:border-dorado focus:outline-none"
+                            />
+                            <span className="text-gray-300 font-black">—</span>
+                            <input
+                              type="time"
+                              value={h.cierre}
+                              onChange={e => cambiarHorario(h.diaSemana, 'cierre', e.target.value)}
+                              className="border-2 border-gray-100 bg-gray-50 rounded-xl px-3 py-2 text-sm font-bold focus:border-dorado focus:outline-none"
+                            />
+                          </div>
+                        ) : (
+                          <span className="text-xs font-black text-red-400 bg-red-50 px-3 py-1.5 rounded-full uppercase tracking-widest">
+                            Cerrado
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-gray-100">
+                    <p className="text-xs text-gray-400">
+                      Para cerrar un día puntual (una fiesta, una urgencia), crea un evento
+                      que cubra la jornada en Google Calendar.
+                    </p>
+                    <button
+                      onClick={guardarHorarios}
+                      disabled={guardandoHorarios}
+                      className="w-full sm:w-auto bg-negro-barber text-dorado px-8 py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:bg-dorado hover:text-negro-barber transition-all shadow-xl disabled:opacity-40 uppercase tracking-widest text-xs"
+                    >
+                      {guardandoHorarios ? 'Guardando...' : 'Guardar horarios'}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}

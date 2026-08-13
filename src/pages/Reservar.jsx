@@ -3,17 +3,6 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FaCalendarDays, FaClock, FaArrowLeft, FaPen, FaGift } from 'react-icons/fa6';
 import api from '../api';
 
-// Horario de atención por día de la semana (0 = domingo, 6 = sábado)
-const HORARIOS_BARBERIA = {
-  0: { apertura: '13:00:00', cierre: '17:00:00' }, // Domingo
-  1: { apertura: '11:00:00', cierre: '19:00:00' }, // Lunes
-  2: { apertura: '11:00:00', cierre: '20:00:00' }, // Martes
-  3: { apertura: '15:00:00', cierre: '20:00:00' }, // Miércoles
-  4: { apertura: '11:00:00', cierre: '20:00:00' }, // Jueves
-  5: { apertura: '11:00:00', cierre: '20:00:00' }, // Viernes
-  6: { apertura: '11:00:00', cierre: '20:00:00' }, // Sábado
-};
-
 function Reservar() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -26,6 +15,9 @@ function Reservar() {
   
   const [horariosDinamicos, setHorariosDinamicos] = useState([]);
   const [cargandoHoras, setCargandoHoras] = useState(false);
+
+  // Horario de la barbería, configurable por el barbero desde su panel
+  const [horarioSemanal, setHorarioSemanal] = useState(null);
   
   // 👇 NUEVO: Estado para saber si está canjeando su premio
   const [esPremio, setEsPremio] = useState(false);
@@ -55,6 +47,21 @@ function Reservar() {
     cargarServicio();
   }, [id]);
 
+  useEffect(() => {
+    const cargarHorarios = async () => {
+      try {
+        const res = await api.get('/horarios');
+        // Indexamos por día de la semana para buscarlo directo
+        const porDia = {};
+        res.data.forEach(h => { porDia[h.diaSemana] = h; });
+        setHorarioSemanal(porDia);
+      } catch (err) {
+        console.error('Error al cargar horarios:', err);
+      }
+    };
+    cargarHorarios();
+  }, []);
+
   const manejarCambioFecha = (e) => {
     const fechaSeleccionada = e.target.value;
     setMensaje({ texto: '', tipo: '' });
@@ -63,28 +70,33 @@ function Reservar() {
   };
 
   useEffect(() => {
-    if (!fecha || !servicio) return;
+    if (!fecha || !servicio || !horarioSemanal) return;
 
     const generarHorarios = async () => {
       setCargandoHoras(true);
-      setHorariosDinamicos([]); 
+      setHorariosDinamicos([]);
       setMensaje({ texto: '', tipo: '' });
 
       try {
+        const diaSemana = new Date(`${fecha}T12:00:00`).getDay();
+        const horario = horarioSemanal[diaSemana];
+
+        if (!horario || !horario.abierto) {
+          setMensaje({ texto: 'La barbería no abre este día. Elige otra fecha.', tipo: 'error' });
+          return;
+        }
+
         const token = localStorage.getItem('token');
         const res = await api.get(`/citas/disponibilidad/${fecha}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        const bloquesOcupados = res.data; 
+        const bloquesOcupados = res.data;
 
         const horariosDisponibles = [];
         const ahora = new Date();
 
-        const diaSemana = new Date(`${fecha}T12:00:00`).getDay();
-        const horario = HORARIOS_BARBERIA[diaSemana];
-
-        let tiempoActual = new Date(`${fecha}T${horario.apertura}`);
-        const tiempoCierre = new Date(`${fecha}T${horario.cierre}`);
+        let tiempoActual = new Date(`${fecha}T${horario.apertura}:00`);
+        const tiempoCierre = new Date(`${fecha}T${horario.cierre}:00`);
         const duracionMs = servicio.duracionMinutos * 60000;
 
         while (tiempoActual.getTime() + duracionMs <= tiempoCierre.getTime()) {
@@ -119,7 +131,7 @@ function Reservar() {
     };
 
     generarHorarios();
-  }, [fecha, servicio]);
+  }, [fecha, servicio, horarioSemanal]);
 
   const manejarEnvio = async (e) => {
     e.preventDefault();
