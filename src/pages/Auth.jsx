@@ -144,6 +144,16 @@ function Auth() {
                 placeholder="••••••••"
                 disabled={cargando}
               />
+              {esLogin && (
+                <div className="text-right mt-2">
+                  <Link
+                    to="/recuperar"
+                    className="text-gray-400 hover:text-dorado transition text-xs font-bold"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* 👇 4. Botón Dinámico con Spinner */}

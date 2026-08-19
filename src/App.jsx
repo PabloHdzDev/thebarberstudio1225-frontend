@@ -10,6 +10,8 @@ import BarberDashboard from './pages/BarberDashboard';
 import UserDashboard from './pages/UserDashboard';
 import Blog from './pages/Blog';
 import Articulo from './pages/Articulo';
+import RecuperarPassword from './pages/RecuperarPassword';
+import RestablecerPassword from './pages/RestablecerPassword';
 import ScrollToTop from './components/ScrollToTop';
 
 const RutaProtegida = ({ children }) => {
@@ -38,6 +40,8 @@ function App() {
           <Route path="/portafolio" element={<Portafolio />} />
           <Route path="/reservar/:id" element={<Reservar />} />
           <Route path="/login" element={<Auth />} />
+          <Route path="/recuperar" element={<RecuperarPassword />} />
+          <Route path="/restablecer/:token" element={<RestablecerPassword />} />
           
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:id" element={<Articulo />} />
