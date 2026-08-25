@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FaCalendarDays, FaClock, FaArrowLeft, FaPen, FaGift } from 'react-icons/fa6';
 import api from '../api';
+import { registrarReservaCita } from '../analytics';
 
 function Reservar() {
   const { id } = useParams();
@@ -162,6 +163,11 @@ function Reservar() {
 
       // Limpiamos el flag de localStorage (el backend ya limpió premioPendiente en BD)
       localStorage.removeItem('canjearPremio');
+
+      // La cita quedó agendada: se reporta como conversión con el precio real cobrado
+      registrarReservaCita({
+        valor: esPremio ? Math.round(servicio.precio / 2) : servicio.precio
+      });
 
       setMensaje({ texto: '¡Cita agendada con éxito! Te esperamos.', tipo: 'exito' });
       setTimeout(() => navigate('/perfil'), 2500);
