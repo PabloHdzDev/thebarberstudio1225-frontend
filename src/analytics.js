@@ -6,7 +6,7 @@ const CONVERSION_ID = 'AW-18409833995';
 // Etiqueta de la acción de conversión "reserva de cita".
 // Se obtiene en Google Ads > Herramientas > Conversiones > (tu acción) >
 // "Fragmento de evento", dentro de send_to: 'AW-18409833995/AQUI_VA_LA_ETIQUETA'
-const CONVERSION_LABEL = '';
+const CONVERSION_LABEL = 'mZtUCOyfxeccEIuMv8pE';
 
 // Registra una cita agendada con éxito.
 // No hace nada si falta la etiqueta o si gtag fue bloqueado por el navegador,
