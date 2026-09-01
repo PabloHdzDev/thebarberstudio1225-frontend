@@ -328,18 +328,24 @@ function Home() {
             {horarioAgrupado.length === 0 ? (
               <p className="text-gray-500 text-sm">Consulta nuestros horarios por WhatsApp.</p>
             ) : (
-              <ul className="space-y-4 text-sm sm:text-lg text-gray-300">
-                {horarioAgrupado.map((h) => (
-                  <li
-                    key={h.etiqueta}
-                    className={`flex justify-between gap-4 border-b border-gray-700 pb-2 last:border-0 ${
-                      h.cerrado ? 'text-camel font-bold' : ''
-                    }`}
-                  >
-                    <span>{h.etiqueta}</span> <span>{h.valor}</span>
-                  </li>
-                ))}
-              </ul>
+              <>
+                <ul className="space-y-4 text-sm sm:text-lg text-gray-300">
+                  {horarioAgrupado.map((h) => (
+                    <li
+                      key={h.etiqueta}
+                      className={`flex justify-between gap-4 border-b border-gray-700 pb-2 last:border-0 ${
+                        h.cerrado ? 'text-camel font-bold' : ''
+                      }`}
+                    >
+                      <span>{h.etiqueta}</span> <span>{h.valor}</span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-gray-500 text-xs sm:text-sm mt-6 leading-relaxed">
+                  El horario puede variar según la agenda del día. Al reservar en línea
+                  ves los espacios realmente disponibles.
+                </p>
+              </>
             )}
           </div>
 
