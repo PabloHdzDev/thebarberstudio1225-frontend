@@ -5,20 +5,63 @@ import { FaWhatsapp, FaFacebook, FaPhone, FaNewspaper, FaBookOpen } from 'react-
 import { ARTICULOS_BLOG } from '../articles'; 
 import Footer from '../components/Footer';
 
+const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+// La semana se muestra empezando en lunes, no en domingo
+const ORDEN_SEMANA = [1, 2, 3, 4, 5, 6, 0];
+
+const a12Horas = (hhmm) => {
+  const [h, m] = hhmm.split(':').map(Number);
+  const sufijo = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${String(m).padStart(2, '0')} ${sufijo}`;
+};
+
+// Agrupa días seguidos con el mismo horario: "Jueves a Sábado  11:00 AM - 8:00 PM"
+const agruparHorarios = (horarios) => {
+  if (!horarios?.length) return [];
+
+  const porDia = {};
+  horarios.forEach(h => { porDia[h.diaSemana] = h; });
+
+  const filas = [];
+  for (const dia of ORDEN_SEMANA) {
+    const h = porDia[dia];
+    if (!h) continue;
+
+    const valor = h.abierto ? `${a12Horas(h.apertura)} - ${a12Horas(h.cierre)}` : 'Cerrado';
+    const anterior = filas[filas.length - 1];
+
+    if (anterior && anterior.valor === valor) {
+      anterior.hasta = dia;
+    } else {
+      filas.push({ desde: dia, hasta: dia, valor, cerrado: !h.abierto });
+    }
+  }
+
+  return filas.map(f => ({
+    etiqueta: f.desde === f.hasta ? DIAS[f.desde] : `${DIAS[f.desde]} a ${DIAS[f.hasta]}`,
+    valor: f.valor,
+    cerrado: f.cerrado,
+  }));
+};
+
 function Home() {
   const [servicios, setServicios] = useState([]);
   const [productos, setProductos] = useState([]);
+  const [horarios, setHorarios] = useState([]);
   const [cargando, setCargando] = useState(true);
 
   useEffect(() => {
     const cargarDatos = async () => {
       try {
-        const [resServ, resProd] = await Promise.all([
+        const [resServ, resProd, resHor] = await Promise.all([
           api.get('/servicios'),
-          api.get('/productos')
+          api.get('/productos'),
+          api.get('/horarios')
         ]);
         setServicios(resServ.data);
         setProductos(resProd.data);
+        setHorarios(resHor.data);
       } catch (err) {
         console.error("Error al cargar datos:", err);
       } finally {
@@ -27,6 +70,8 @@ function Home() {
     };
     cargarDatos();
   }, []);
+
+  const horarioAgrupado = agruparHorarios(horarios);
 
   const hayOfertasActivas = servicios.some(s => s.esOferta && s.activo) || 
                             productos.some(p => p.esOferta && p.activo);
@@ -280,14 +325,22 @@ function Home() {
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
           <div className=" p-10 rounded-3xl border border-gray-800">
             <h3 className="text-3xl font-bold mb-6 text-camel">Horario de Atención</h3>
-            <ul className="space-y-4 text-sm sm:text-lg text-gray-300">
-              <li className="flex justify-between border-b border-gray-700 pb-2">
-                <span>Lunes - Domingos</span> <span>11:00 AM - 7:00 PM</span>
-              </li>
-              <li className="flex justify-between text-camel font-bold">
-                <span>Miércoles</span> <span>Cerrado</span>
-              </li>
-            </ul>
+            {horarioAgrupado.length === 0 ? (
+              <p className="text-gray-500 text-sm">Consulta nuestros horarios por WhatsApp.</p>
+            ) : (
+              <ul className="space-y-4 text-sm sm:text-lg text-gray-300">
+                {horarioAgrupado.map((h) => (
+                  <li
+                    key={h.etiqueta}
+                    className={`flex justify-between gap-4 border-b border-gray-700 pb-2 last:border-0 ${
+                      h.cerrado ? 'text-camel font-bold' : ''
+                    }`}
+                  >
+                    <span>{h.etiqueta}</span> <span>{h.valor}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className=" p-10 rounded-3xl flex flex-col justify-center border border-gray-800">
