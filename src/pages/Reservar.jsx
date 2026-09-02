@@ -225,10 +225,8 @@ function Reservar() {
           )}
 
           {premioNoAplica && (
-            <div className="mt-4 bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs font-bold p-3 rounded-xl text-left leading-relaxed">
-              Tu premio no se aplica aquí: solo cubre <b>Corte de Cabello</b> o{' '}
-              <b>Corte Clásico de Niño</b>. Puedes agendar este servicio a precio
-              normal y tu premio se queda guardado para después.
+            <div className="mt-4 bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs font-bold p-3 rounded-xl leading-relaxed">
+              Tu premio no aplica aquí, solo en cortes. Queda guardado para después.
             </div>
           )}
         </div>
