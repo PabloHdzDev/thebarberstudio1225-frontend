@@ -208,13 +208,19 @@ function UserDashboard() {
 
             {/* Botón de canje */}
             {premioPendiente && (
-              <Link
-                to="/"
-                onClick={manejarCanjearPremio}
-                className="inline-flex items-center justify-center gap-2 bg-dorado text-negro-barber px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all shadow-lg shadow-dorado/20 w-full sm:w-auto mb-4"
-              >
-                <FaGift className="text-lg" /> Agendar con 50% OFF
-              </Link>
+              <div className="mb-4">
+                <Link
+                  to="/"
+                  onClick={manejarCanjearPremio}
+                  className="inline-flex items-center justify-center gap-2 bg-dorado text-negro-barber px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all shadow-lg shadow-dorado/20 w-full sm:w-auto"
+                >
+                  <FaGift className="text-lg" /> Agendar con 50% OFF
+                </Link>
+                <p className="text-gray-500 text-[11px] mt-2 leading-relaxed">
+                  Válido en Corte de Cabello o Corte Clásico de Niño. No aplica en
+                  paquetes ni otros servicios.
+                </p>
+              </div>
             )}
 
             {/* Stats del cliente */}

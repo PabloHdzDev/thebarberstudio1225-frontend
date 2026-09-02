@@ -20,20 +20,28 @@ function Reservar() {
   // Horario de la barbería, configurable por el barbero desde su panel
   const [horarioSemanal, setHorarioSemanal] = useState(null);
   
-  // 👇 NUEVO: Estado para saber si está canjeando su premio
-  const [esPremio, setEsPremio] = useState(false);
+  // El usuario viene del botón de canjear premio en su perfil
+  const [quiereCanjear, setQuiereCanjear] = useState(false);
+
+  // El premio solo cubre cortes sencillos: el servicio debe permitirlo
+  const esPremio = quiereCanjear && servicio?.aplicaPremio === true;
+  const premioNoAplica = quiereCanjear && servicio && !servicio.aplicaPremio;
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) navigate('/login');
 
-    // Revisamos si el usuario viene de hacer clic en el botón de premio
     if (localStorage.getItem('canjearPremio') === 'true') {
-      setEsPremio(true);
-      // Pre-llenamos las notas para que el barbero sepa por qué le cobrará menos
-      setNotas('🎁 PREMIO DE LEALTAD: 50% de descuento aplicable al pagar.');
+      setQuiereCanjear(true);
     }
   }, [navigate]);
+
+  useEffect(() => {
+    // Se avisa al barbero en las notas, solo si el premio de verdad aplica
+    if (esPremio) {
+      setNotas('🎁 PREMIO DE LEALTAD: 50% de descuento aplicable al pagar.');
+    }
+  }, [esPremio]);
 
   useEffect(() => {
     const cargarServicio = async () => {
@@ -161,8 +169,11 @@ function Reservar() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Limpiamos el flag de localStorage (el backend ya limpió premioPendiente en BD)
-      localStorage.removeItem('canjearPremio');
+      // Solo se consume el premio si de verdad se aplicó; si el servicio no era
+      // elegible, el cliente conserva su premio para la próxima.
+      if (esPremio) {
+        localStorage.removeItem('canjearPremio');
+      }
 
       // La cita quedó agendada: se reporta como conversión con el precio real cobrado
       registrarReservaCita({
@@ -210,6 +221,14 @@ function Reservar() {
           {esPremio && (
             <div className="mt-3 bg-dorado text-negro-barber text-[10px] font-black uppercase tracking-widest py-1.5 px-4 rounded-full inline-flex items-center gap-2">
               <FaGift /> PREMIO 50% OFF APLICADO
+            </div>
+          )}
+
+          {premioNoAplica && (
+            <div className="mt-4 bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs font-bold p-3 rounded-xl text-left leading-relaxed">
+              Tu premio no se aplica aquí: solo cubre <b>Corte de Cabello</b> o{' '}
+              <b>Corte Clásico de Niño</b>. Puedes agendar este servicio a precio
+              normal y tu premio se queda guardado para después.
             </div>
           )}
         </div>

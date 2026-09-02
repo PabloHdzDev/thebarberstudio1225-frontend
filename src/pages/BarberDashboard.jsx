@@ -54,7 +54,7 @@ function BarberDashboard() {
     nombre: '', descripcion: '', precio: '', stock: 0, duracionMinutos: 30,
     fechaHora: '', notas: '', activo: true,
     servicio: '', cliente: '', nombreInvitado: '', esInvitado: false,
-    orden: 0, esOferta: false, precioAnterior: ''
+    orden: 0, esOferta: false, precioAnterior: '', aplicaPremio: false
   });
 
   const mostrarNotificacion = (mensaje, tipo = 'exito') => {
@@ -220,7 +220,10 @@ function BarberDashboard() {
         data.append('orden', form.orden);
         data.append('esOferta', form.esOferta);
         data.append('precioAnterior', form.precioAnterior || 0);
-        if (tabActiva === 'servicios') data.append('duracionMinutos', form.duracionMinutos);
+        if (tabActiva === 'servicios') {
+          data.append('duracionMinutos', form.duracionMinutos);
+          data.append('aplicaPremio', form.aplicaPremio ? 'true' : 'false');
+        }
         if (tabActiva === 'productos') data.append('stock', form.stock);
         if (archivo) data.append('imagen', archivo);
 
@@ -265,7 +268,7 @@ function BarberDashboard() {
   const cerrarTodo = () => {
     setMostrarForm(false);
     setItemAEditar(null);
-    setForm({ nombre: '', descripcion: '', precio: '', stock: 0, duracionMinutos: 30, fechaHora: '', notas: '', activo: true, servicio: '', cliente: '', nombreInvitado: '', esInvitado: false, orden: 0, esOferta: false, precioAnterior: '' });
+    setForm({ nombre: '', descripcion: '', precio: '', stock: 0, duracionMinutos: 30, fechaHora: '', notas: '', activo: true, servicio: '', cliente: '', nombreInvitado: '', esInvitado: false, orden: 0, esOferta: false, precioAnterior: '', aplicaPremio: false });
     setArchivo(null);
     setMenuMovil(false);
   };
@@ -1100,6 +1103,25 @@ function BarberDashboard() {
                           <input type="number" value={form.precioAnterior} onChange={(e) => setForm({ ...form, precioAnterior: e.target.value })} className="w-full mt-1 p-3 pl-8 bg-white border border-red-200 rounded-xl focus:border-red-500 focus:ring-1 focus:ring-red-500 font-bold text-red-500 line-through outline-none transition-all" placeholder="Ej. 350" />
                         </div>
                       </div>
+
+                      {tabActiva === 'servicios' && (
+                        <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border-2 border-dashed border-gray-200 hover:border-dorado transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={form.aplicaPremio}
+                            onChange={(e) => setForm({ ...form, aplicaPremio: e.target.checked })}
+                            className="w-5 h-5 accent-amber-500 rounded cursor-pointer mt-0.5 shrink-0"
+                          />
+                          <span>
+                            <span className="text-xs font-black uppercase text-amber-600 tracking-widest block">
+                              🎁 Válido para el premio de lealtad
+                            </span>
+                            <span className="text-[11px] text-gray-400 font-medium">
+                              Los clientes podrán canjear aquí su 50% de descuento tras 5 visitas
+                            </span>
+                          </span>
+                        </label>
+                      )}
                     </div>
                     <div>
                       <label className="text-[10px] md:text-xs font-black uppercase text-gray-400 tracking-widest">Descripción</label>
