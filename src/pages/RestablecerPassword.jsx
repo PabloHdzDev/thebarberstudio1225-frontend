@@ -85,7 +85,7 @@ function RestablecerPassword() {
               </div>
               <h2 className="text-negro-barber font-black text-lg mb-3">Enlace no válido</h2>
               <p className="text-gray-500 text-sm leading-relaxed mb-6">
-                Este enlace ya venció o ya fue usado. Los enlaces duran 1 hora
+                Este enlace ya venció o ya fue usado. Los enlaces duran 24 horas
                 y solo sirven una vez.
               </p>
               <Link

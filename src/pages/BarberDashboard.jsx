@@ -7,7 +7,7 @@ import {
   FaMoneyBillTrendUp, FaUsers, FaChartColumn, FaGift, FaFire,
   FaTrophy, FaUserPlus, FaUserClock, FaMagnifyingGlass,
   FaLock, FaLockOpen, FaArrowRotateLeft, FaChevronLeft, FaChevronRight,
-  FaAddressBook
+  FaAddressBook, FaKey
 } from 'react-icons/fa6';
 import { io } from 'socket.io-client';
 
@@ -38,6 +38,18 @@ function BarberDashboard() {
   const [dirOrden, setDirOrden] = useState('nombre');
   const [cargandoDir, setCargandoDir] = useState(false);
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
+  const [passwordTemporal, setPasswordTemporal] = useState(null);
+
+  // La contraseña temporal se descarta al abrir o cerrar el modal, para que
+  // nunca se vea la de un cliente mientras se consulta a otro.
+  const verCliente = (cliente) => {
+    setPasswordTemporal(null);
+    setClienteSeleccionado(cliente);
+  };
+  const cerrarCliente = () => {
+    setPasswordTemporal(null);
+    setClienteSeleccionado(null);
+  };
 
   const [horarios, setHorarios] = useState([]);
   const [guardandoHorarios, setGuardandoHorarios] = useState(false);
@@ -141,6 +153,11 @@ function BarberDashboard() {
       mostrarNotificacion('Acción ejecutada con éxito');
       setDirectorio(prev => prev.map(c => c._id === id ? res.data.usuario : c));
       if (clienteSeleccionado?._id === id) setClienteSeleccionado(res.data.usuario);
+
+      // La contraseña temporal solo viaja en esta respuesta: se muestra y ya
+      if (res.data.passwordTemporal) {
+        setPasswordTemporal(res.data.passwordTemporal);
+      }
     } catch (err) {
       mostrarNotificacion(err.response?.data?.mensaje || 'Error al ejecutar la acción', 'error');
     }
@@ -628,7 +645,7 @@ function BarberDashboard() {
                                 </td>
                                 <td className="py-3 px-2">
                                   <button
-                                    onClick={() => setClienteSeleccionado(c)}
+                                    onClick={() => verCliente(c)}
                                     className="text-xs font-black text-gray-400 hover:text-negro-barber bg-gray-100 hover:bg-dorado/20 px-3 py-1.5 rounded-lg transition"
                                   >
                                     Ver
@@ -674,7 +691,7 @@ function BarberDashboard() {
 
         {/* ── MODAL ACCIONES CLIENTE ── */}
         {clienteSeleccionado && (
-          <div className="fixed inset-0 bg-negro-barber/80 backdrop-blur-sm z-100 flex items-center justify-center p-4" onClick={() => setClienteSeleccionado(null)}>
+          <div className="fixed inset-0 bg-negro-barber/80 backdrop-blur-sm z-100 flex items-center justify-center p-4" onClick={cerrarCliente}>
             <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
               <div className="bg-negro-barber p-6 flex items-center gap-4">
                 <div className="w-14 h-14 rounded-2xl bg-dorado/20 flex items-center justify-center text-2xl font-black text-dorado flex-shrink-0">
@@ -687,7 +704,7 @@ function BarberDashboard() {
                     <span className="text-[10px] font-black text-red-400 bg-red-900/30 px-2 py-0.5 rounded-full mt-1 inline-block">Cuenta bloqueada</span>
                   )}
                 </div>
-                <button onClick={() => setClienteSeleccionado(null)} className="text-gray-400 hover:text-white text-xl flex-shrink-0">
+                <button onClick={cerrarCliente} className="text-gray-400 hover:text-white text-xl flex-shrink-0">
                   <FaX />
                 </button>
               </div>
@@ -744,6 +761,54 @@ function BarberDashboard() {
                   >
                     <FaArrowRotateLeft /> Resetear contador de lealtad
                   </button>
+
+                  {/* Contraseña temporal: se muestra una sola vez tras generarla */}
+                  {passwordTemporal ? (
+                    <div className="bg-negro-barber border-2 border-dorado rounded-xl p-4">
+                      <p className="text-[10px] text-dorado font-black uppercase tracking-widest mb-2">
+                        Contraseña temporal
+                      </p>
+                      <p className="text-2xl font-black text-white tracking-widest text-center py-2 select-all break-all">
+                        {passwordTemporal}
+                      </p>
+                      <p className="text-[11px] text-gray-400 leading-relaxed mt-1 mb-3">
+                        Anótala ahora: al cerrar esto no se vuelve a mostrar. Dile que la
+                        cambie desde su perfil al entrar.
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          onClick={() => {
+                            navigator.clipboard?.writeText(passwordTemporal);
+                            mostrarNotificacion('Contraseña copiada');
+                          }}
+                          className="py-2.5 bg-white/10 text-white rounded-lg font-bold text-xs hover:bg-white/20 transition"
+                        >
+                          Copiar
+                        </button>
+                        <a
+                          href={`https://wa.me/${clienteSeleccionado.whatsapp}?text=${encodeURIComponent(
+                            `Hola ${clienteSeleccionado.nombre}, tu contraseña temporal de The Barber Studio 1225 es: ${passwordTemporal}\n\nEntra a https://thebarberstudio1225.vercel.app/login y cámbiala desde tu perfil.`
+                          )}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="py-2.5 bg-green-500 text-white rounded-lg font-bold text-xs hover:bg-green-600 transition flex items-center justify-center gap-1.5"
+                        >
+                          <FaWhatsapp /> Enviar
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`¿Generar una contraseña temporal para ${clienteSeleccionado.nombre}? Su contraseña actual dejará de funcionar.`)) {
+                          ejecutarAccion(clienteSeleccionado._id, 'generar_password');
+                        }
+                      }}
+                      className="flex items-center justify-center gap-2 w-full py-3 bg-gray-50 text-negro-barber border border-gray-200 rounded-xl font-bold text-sm hover:bg-dorado/20 transition"
+                    >
+                      <FaKey /> Generar contraseña temporal
+                    </button>
+                  )}
 
                   {clienteSeleccionado.activo === false ? (
                     <button
