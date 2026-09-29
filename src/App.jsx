@@ -22,6 +22,7 @@ const RutaProtegida = ({ children }) => {
   }
   return children;
 };
+// un pequeño comentario
 
 function App() {
   return (
