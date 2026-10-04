@@ -34,7 +34,7 @@ function Blog() {
                 className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
               >
                 <div className="h-56 overflow-hidden bg-gray-100">
-                  <img src={art.imagenMiniatura} alt={art.titulo} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                  <img src={art.imagenMiniatura} alt={art.titulo} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" loading="lazy" />
                 </div>
                 <div className="p-8 flex flex-col grow">
                   <h3 className="text-xl font-bold text-negro-barber mb-3 tracking-tight leading-snug">{art.titulo}</h3>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
 import { Link } from 'react-router-dom';
-import { FaWhatsapp, FaFacebook, FaPhone, FaNewspaper, FaBookOpen } from 'react-icons/fa6';
+import { FaWhatsapp, FaFacebook, FaPhone, FaNewspaper, FaBookOpen, FaChevronDown } from 'react-icons/fa6';
 import { ARTICULOS_BLOG } from '../articles'; 
 import Footer from '../components/Footer';
 
@@ -45,11 +45,15 @@ const agruparHorarios = (horarios) => {
   }));
 };
 
+// Cuántos servicios se ven antes de pedir "ver todos"
+const SERVICIOS_VISIBLES = 6;
+
 function Home() {
   const [servicios, setServicios] = useState([]);
   const [productos, setProductos] = useState([]);
   const [horarios, setHorarios] = useState([]);
   const [cargando, setCargando] = useState(true);
+  const [verTodosServicios, setVerTodosServicios] = useState(false);
 
   useEffect(() => {
     const cargarDatos = async () => {
@@ -72,6 +76,20 @@ function Home() {
   }, []);
 
   const horarioAgrupado = agruparHorarios(horarios);
+
+  const serviciosMostrados = verTodosServicios
+    ? servicios
+    : servicios.slice(0, SERVICIOS_VISIBLES);
+  const serviciosOcultos = servicios.length - SERVICIOS_VISIBLES;
+
+  const alternarServicios = () => {
+    // Al plegar, se regresa al inicio de la sección para no dejar al usuario
+    // flotando donde ya no hay contenido
+    if (verTodosServicios) {
+      document.getElementById('servicios')?.scrollIntoView({ behavior: 'smooth' });
+    }
+    setVerTodosServicios(!verTodosServicios);
+  };
 
   const hayOfertasActivas = servicios.some(s => s.esOferta && s.activo) || 
                             productos.some(p => p.esOferta && p.activo);
@@ -147,7 +165,7 @@ function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-              {servicios.map((s) => (
+              {serviciosMostrados.map((s) => (
                 <div key={s._id} className="group relative rounded-2xl overflow-hidden border border-arena bg-beige shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col">
                   
                   {s.esOferta && (
@@ -161,6 +179,7 @@ function Home() {
                       src={s.imagen || 'https://via.placeholder.com/400x300?text=Servicio+Barber+Studio+1225'} 
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                       alt={s.nombre} 
+                      loading="lazy"
                     />
                   </div>
                   <div className="p-8 grow relative z-10">
@@ -189,6 +208,22 @@ function Home() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+
+          {!cargando && serviciosOcultos > 0 && (
+            <div className="text-center mt-12">
+              <button
+                onClick={alternarServicios}
+                className="inline-flex items-center gap-3 border-2 border-marron text-marron hover:bg-marron hover:text-beige px-8 py-4 rounded-full font-extrabold uppercase tracking-widest text-xs transition-all shadow-sm"
+              >
+                {verTodosServicios
+                  ? 'Ver menos servicios'
+                  : `Ver los ${serviciosOcultos} servicios restantes`}
+                <FaChevronDown
+                  className={`transition-transform duration-300 ${verTodosServicios ? 'rotate-180' : ''}`}
+                />
+              </button>
             </div>
           )}
         </div>
@@ -295,7 +330,7 @@ function Home() {
                 className="w-full md:w-85 lg:w-[30%] bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col"
               >
                 <div className="h-48 overflow-hidden bg-gray-100">
-                  <img src={art.imagenMiniatura} alt={art.titulo} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                  <img src={art.imagenMiniatura} alt={art.titulo} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" loading="lazy" />
                 </div>
                 <div className="p-6 flex flex-col grow">
                   <h3 className="text-xl font-bold text-negro-barber mb-3 tracking-tight leading-snug">{art.titulo}</h3>
