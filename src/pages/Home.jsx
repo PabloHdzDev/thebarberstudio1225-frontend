@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { FaWhatsapp, FaFacebook, FaPhone, FaNewspaper, FaBookOpen, FaChevronDown } from 'react-icons/fa6';
 import { ARTICULOS_BLOG } from '../articles'; 
 import Footer from '../components/Footer';
+import MapaDiferido from '../components/MapaDiferido';
+import { optimizar } from '../utils/imagen';
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 // La semana se muestra empezando en lunes, no en domingo
@@ -176,7 +178,7 @@ function Home() {
 
                   <div className="h-56 overflow-hidden">
                     <img 
-                      src={s.imagen || 'https://via.placeholder.com/400x300?text=Servicio+Barber+Studio+1225'} 
+                      src={optimizar(s.imagen, 600) || 'https://via.placeholder.com/400x300?text=Servicio+Barber+Studio+1225'} 
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" 
                       alt={s.nombre} 
                       loading="lazy"
@@ -198,7 +200,7 @@ function Home() {
                       </span>
                     </div>
 
-                    <Link to={`/reservar/${s._id}`} className={`px-5 py-2 rounded-lg font-semibold border hover:scale-105 transition-all ${
+                    <Link to={`/reservar/${s._id}`} aria-label={`Reservar ${s.nombre}`} className={`px-5 py-2 rounded-lg font-semibold border hover:scale-105 transition-all ${
                       s.esOferta 
                       ? 'border-rojo-oferta bg-rojo-oferta text-white shadow-lg shadow-rojo-oferta/30' 
                       : 'border-marron bg-beige text-marron hover:text-beige hover:bg-marron'
@@ -264,7 +266,7 @@ function Home() {
 
                   <div className="h-64 rounded-2xl mb-6 overflow-hidden bg-arena relative">
                     <img 
-                      src={prod.imagen || 'https://via.placeholder.com/400x400?text=Producto'} 
+                      src={optimizar(prod.imagen, 560) || 'https://via.placeholder.com/400x400?text=Producto'} 
                       className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-500" 
                       alt={prod.nombre} 
                     />
@@ -361,7 +363,7 @@ function Home() {
           <div className=" p-10 rounded-3xl border border-gray-800">
             <h3 className="text-3xl font-bold mb-6 text-camel">Horario de Atención</h3>
             {horarioAgrupado.length === 0 ? (
-              <p className="text-gray-500 text-sm">Consulta nuestros horarios por WhatsApp.</p>
+              <p className="text-gray-400 text-sm">Consulta nuestros horarios por WhatsApp.</p>
             ) : (
               <>
                 <ul className="space-y-4 text-sm sm:text-lg text-gray-300">
@@ -376,7 +378,7 @@ function Home() {
                     </li>
                   ))}
                 </ul>
-                <p className="text-gray-500 text-xs sm:text-sm mt-6 leading-relaxed">
+                <p className="text-gray-400 text-xs sm:text-sm mt-6 leading-relaxed">
                   El horario puede variar según la agenda del día. Al reservar en línea
                   ves los espacios realmente disponibles.
                 </p>
@@ -390,14 +392,10 @@ function Home() {
               Av. La Tijera 1225, Los Tulipanes, 45647
             </p>
             <div className="w-full h-48 bg-negro-barber rounded-xl flex items-center justify-center text-beige border border-gray-700 overflow-hidden">
-              <iframe
+              <MapaDiferido
                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d1867.573429010577!2d-103.43487340160522!3d20.582059400000006!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8428ad234eb3317f%3A0x8a43ef56fc8fa6ce!2z8J-SiEJhcmJlcsOtYSBzdHVkaW8gMTIyNfCfkog!5e0!3m2!1ses!2smx!4v1776730254597!5m2!1ses!2smx"
-                className="w-full h-full"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              ></iframe>
+                titulo="Ubicación de The Barber Studio 1225 en Google Maps"
+              />
             </div>
           </div>
         </div>

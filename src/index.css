@@ -12,7 +12,9 @@
   /* 🌿 TIERRA */
   --color-arena: #E6D3B3;
   --color-camel: #C2A27C;
-  --color-marron: #8B6B4A;
+  /* Oscurecido de #8B6B4A a #7A5C3E: sobre beige pasa de 4.33 a 5.43 de
+     contraste, que es lo que exige WCAG AA para texto normal */
+  --color-marron: #7A5C3E;
   --color-marron-oscuro: #4B3A2F;
 
   /* ✨ ACENTOS */

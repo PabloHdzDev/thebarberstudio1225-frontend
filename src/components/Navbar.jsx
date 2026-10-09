@@ -55,12 +55,13 @@ function Navbar() {
 
             <div className="h-8 w-px bg-gray-700 mx-2 hidden sm:block"></div>
 
-            <button 
+            <button
               onClick={cerrarSesion}
+              aria-label="Cerrar sesión"
               className="text-gray-400 hover:text-dorado transition-colors flex items-center gap-2 font-bold text-sm"
             >
               <span className="hidden sm:inline">Salir</span>
-              <FaArrowRightFromBracket />
+              <FaArrowRightFromBracket aria-hidden="true" />
             </button>
           </div>
         )}

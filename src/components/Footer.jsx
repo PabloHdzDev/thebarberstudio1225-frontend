@@ -22,14 +22,14 @@ function Footer() {
             <FaFacebook className="text-2xl" /> Facebook
           </a>
         </div>
-        <p className="text-xs pt-8 text-gray-600 border-t border-gray-900">
+        <p className="text-xs pt-8 text-gray-400 border-t border-gray-900">
           © {new Date().getFullYear()} The Barber Studio 1225. Calidad que se nota.
         </p>
         <a
           href="https://pablohernandez.netlify.app/"
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-1.5 mt-4 text-[11px] text-gray-700 hover:text-beige transition-colors"
+          className="inline-flex items-center gap-1.5 mt-4 text-[11px] text-gray-400 hover:text-beige transition-colors"
         >
           <FaCode className="text-xs" />
           Diseñado y desarrollado por Pablo Hernández

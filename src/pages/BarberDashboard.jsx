@@ -11,8 +11,6 @@ import {
 } from 'react-icons/fa6';
 import { io } from 'socket.io-client';
 
-const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
-
 const DIAS_SEMANA = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
 const NIVELES = {
@@ -75,6 +73,10 @@ function BarberDashboard() {
   };
 
   useEffect(() => {
+    // La conexión se abre aquí dentro, no al cargar el módulo: así sólo se
+    // conecta quien realmente entra al panel, y no todo visitante del sitio.
+    const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
+
     socket.on('notificar_cita', (nuevaCita) => {
       setCitas(prev => {
         const existe = prev.find(c => c._id === nuevaCita._id);
@@ -83,8 +85,10 @@ function BarberDashboard() {
       });
       mostrarNotificacion(`Agenda actualizada: ${nuevaCita.cliente?.nombre || nuevaCita.nombreInvitado}`);
     });
+
     return () => {
       socket.off('notificar_cita');
+      socket.disconnect();
     };
   }, []);
 
