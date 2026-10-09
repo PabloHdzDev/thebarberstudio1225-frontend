@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaArrowLeft, FaScissors, FaX } from 'react-icons/fa6';
+import { FaArrowLeft, FaScissors } from 'react-icons/fa6';
 import BandaScroll from '../components/BandaScroll';
+import VisorTrabajo from '../components/VisorTrabajo';
 
 import img1 from '../assets/portfolio/WhatsApp Image 2026-06-16 at 8.07.46 AM.jpeg';
 import img2 from '../assets/portfolio/WhatsApp Image 2026-06-16 at 8.08.19 AM.jpeg';
@@ -14,15 +15,15 @@ import img8 from '../assets/portfolio/WhatsApp Image 2026-06-16 at 8.14.06 AM.jp
 import img9 from '../assets/portfolio/WhatsApp Image 2026-06-16 at 8.14.31 AM.jpeg';
 
 const trabajos = [
-  { img: img1, tag: 'Fade Clásico',      num: '01', objPos: '50% 55%', ancho: 300, alto: 420, desfase: -30 },
-  { img: img2, tag: 'Corte Texturizado', num: '02', objPos: '50% 38%', ancho: 230, alto: 310, desfase:  60 },
-  { img: img3, tag: 'Corte Clásico',     num: '03', objPos: '65% 68%', ancho: 340, alto: 470, desfase: -10 },
-  { img: img4, tag: 'Rizado Fade',       num: '04', objPos: '50% 32%', ancho: 240, alto: 330, desfase:  80 },
-  { img: img5, tag: 'Slick Back + Barba',num: '05', objPos: '50% 28%', ancho: 380, alto: 520, desfase: -50 },
-  { img: img6, tag: 'Bowl Fade',         num: '06', objPos: '50% 62%', ancho: 250, alto: 340, desfase:  50 },
-  { img: img7, tag: 'Pompadour Fade',    num: '07', objPos: '50% 28%', ancho: 320, alto: 440, desfase: -20 },
-  { img: img8, tag: 'Ondas Texturizadas',num: '08', objPos: '50% 33%', ancho: 230, alto: 300, desfase:  70 },
-  { img: img9, tag: 'Corte Limpio',      num: '09', objPos: '50% 28%', ancho: 350, alto: 480, desfase: -40 },
+  { img: img1, tag: 'Fade Clásico',      num: '01', objPos: '50% 55%', ancho: 300, alto: '56vh' },
+  { img: img2, tag: 'Corte Texturizado', num: '02', objPos: '50% 38%', ancho: 230, alto: '41vh' },
+  { img: img3, tag: 'Corte Clásico',     num: '03', objPos: '65% 68%', ancho: 340, alto: '62vh' },
+  { img: img4, tag: 'Rizado Fade',       num: '04', objPos: '50% 32%', ancho: 240, alto: '44vh' },
+  { img: img5, tag: 'Slick Back + Barba',num: '05', objPos: '50% 28%', ancho: 380, alto: '70vh' },
+  { img: img6, tag: 'Bowl Fade',         num: '06', objPos: '50% 62%', ancho: 250, alto: '45vh' },
+  { img: img7, tag: 'Pompadour Fade',    num: '07', objPos: '50% 28%', ancho: 320, alto: '58vh' },
+  { img: img8, tag: 'Ondas Texturizadas',num: '08', objPos: '50% 33%', ancho: 230, alto: '40vh' },
+  { img: img9, tag: 'Corte Limpio',      num: '09', objPos: '50% 28%', ancho: 350, alto: '64vh' },
 ];
 
 const stats = [
@@ -32,13 +33,15 @@ const stats = [
 ];
 
 function Portafolio() {
+  // Guarda el trabajo y el rectángulo de la tarjeta tocada, para que el visor
+  // pueda crecer justo desde ahí
   const [ampliada, setAmpliada] = useState(null);
 
   return (
     <div className="min-h-screen bg-negro-barber">
 
       {/* ── Header ── */}
-      <div className="pt-16 pb-10 px-4 text-center">
+      <div className="pt-12 pb-6 px-4 text-center">
         <p className="text-camel tracking-[0.5em] text-xs uppercase mb-6 font-medium">
           Barber Imperio
         </p>
@@ -59,7 +62,7 @@ function Portafolio() {
       </div>
 
       {/* ── Stats ── */}
-      <div className="max-w-sm sm:max-w-lg mx-auto px-4 mb-14 grid grid-cols-3 gap-3">
+      <div className="max-w-sm sm:max-w-lg mx-auto px-4 mb-4 grid grid-cols-3 gap-3">
         {stats.map(s => (
           <div key={s.label} className="text-center border border-gray-800 rounded-xl py-4 px-2">
             <div className="text-xl sm:text-2xl font-black text-dorado mb-1">{s.num}</div>
@@ -69,7 +72,10 @@ function Portafolio() {
       </div>
 
       {/* ── Banda horizontal con scroll ── */}
-      <BandaScroll trabajos={trabajos} onSeleccionar={setAmpliada} />
+      <BandaScroll
+        trabajos={trabajos}
+        onSeleccionar={(trabajo, rect) => setAmpliada({ trabajo, rect })}
+      />
 
       {/* ── CTA ── */}
       <div className="text-center py-16 px-4">
@@ -78,7 +84,7 @@ function Portafolio() {
         </p>
         <Link
           to="/"
-          className="inline-flex items-center gap-2 bg-dorado text-negro-barber font-black px-8 py-3.5 rounded-full text-xs tracking-widest uppercase hover:bg-dorado-hover transition-colors duration-300"
+          className="inline-flex items-center gap-3 bg-dorado text-negro-barber font-black px-12 sm:px-16 py-5 sm:py-6 rounded-full text-sm sm:text-base tracking-[0.2em] uppercase hover:bg-dorado-hover hover:scale-105 transition-all duration-300 shadow-xl shadow-dorado/20"
         >
           AGENDA TU CITA
         </Link>
@@ -92,38 +98,12 @@ function Portafolio() {
         </div>
       </div>
 
-      {/* ── Visor ── */}
       {ampliada && (
-        <div
-          className="fixed inset-0 z-100 bg-negro-barber/95 backdrop-blur-sm flex items-center justify-center p-4"
-          onClick={() => setAmpliada(null)}
-          role="dialog"
-          aria-modal="true"
-          aria-label={ampliada.tag}
-        >
-          <button
-            onClick={() => setAmpliada(null)}
-            aria-label="Cerrar"
-            className="absolute top-6 right-6 text-beige/60 hover:text-dorado text-2xl transition-colors"
-          >
-            <FaX />
-          </button>
-
-          <figure className="max-h-[85vh] max-w-4xl" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={ampliada.img}
-              alt={ampliada.tag}
-              className="max-h-[75vh] w-auto rounded-2xl shadow-2xl"
-              style={{ objectPosition: ampliada.objPos }}
-            />
-            <figcaption className="text-center mt-5">
-              <span className="text-dorado text-[10px] font-black tracking-[0.3em] block mb-1">
-                {ampliada.num}
-              </span>
-              <span className="text-beige font-bold tracking-wide">{ampliada.tag}</span>
-            </figcaption>
-          </figure>
-        </div>
+        <VisorTrabajo
+          trabajo={ampliada.trabajo}
+          rect={ampliada.rect}
+          onCerrar={() => setAmpliada(null)}
+        />
       )}
 
     </div>

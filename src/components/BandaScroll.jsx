@@ -2,15 +2,21 @@ import { useRef, useState, useEffect } from 'react';
 
 // Banda horizontal de imágenes que avanza con el scroll vertical.
 // La sección queda fija mientras dura el recorrido; cuando termina, la página
-// sigue su curso normal. Cada imagen lleva su propia altura y desfase vertical
-// para que la fila no se lea como una cuadrícula.
+// sigue su curso normal. Las tarjetas se encogen mientras el scroll va rápido
+// y recuperan su tamaño al detenerse, igual que en la referencia.
 function BandaScroll({ trabajos, onSeleccionar }) {
   const seccion = useRef(null);
   const pista = useRef(null);
+
   const [avance, setAvance] = useState(0);
   const [reducido, setReducido] = useState(false);
   // Se mide en el efecto, no durante el render: ahí el ref todavía es null
   const [desplazamiento, setDesplazamiento] = useState(0);
+  // 1 = tamaño normal; baja mientras el scroll va rápido
+  const [escala, setEscala] = useState(1);
+
+  const ultimaPos = useRef(0);
+  const temporizadorParo = useRef(null);
 
   useEffect(() => {
     const consulta = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -36,6 +42,18 @@ function BandaScroll({ trabajos, onSeleccionar }) {
         setDesplazamiento(Math.max(sobrante, 0));
       }
 
+      // Qué tan rápido va el scroll en este fotograma
+      const y = window.scrollY;
+      const velocidad = Math.abs(y - ultimaPos.current);
+      ultimaPos.current = y;
+      // Tope en 0.14 para que encoja lo justo y no se sienta un salto
+      setEscala(1 - Math.min(velocidad / 260, 0.14));
+
+      // Sin más eventos de scroll nadie restauraría el tamaño, así que se
+      // programa la vuelta a la normalidad en cuanto el movimiento se detiene
+      clearTimeout(temporizadorParo.current);
+      temporizadorParo.current = setTimeout(() => setEscala(1), 140);
+
       const { top, height } = nodo.getBoundingClientRect();
       const recorrido = height - window.innerHeight;
       if (recorrido <= 0) return;
@@ -58,6 +76,7 @@ function BandaScroll({ trabajos, onSeleccionar }) {
     return () => {
       window.removeEventListener('scroll', alHacerScroll);
       window.removeEventListener('resize', alHacerScroll);
+      clearTimeout(temporizadorParo.current);
     };
   }, [reducido]);
 
@@ -74,11 +93,12 @@ function BandaScroll({ trabajos, onSeleccionar }) {
       >
         <div
           ref={pista}
+          // items-center alinea todas las tarjetas sobre un mismo eje, sin
+          // importar que midan distinto
           className="flex items-center gap-6 md:gap-10 px-8 md:px-16 will-change-transform"
           style={{
             transform: reducido ? 'none' : `translate3d(-${avance * desplazamiento}px, 0, 0)`,
             transition: 'transform 120ms linear',
-            // Sin reducción de movimiento la pista no debe cortarse
             width: reducido ? '100%' : 'max-content',
             flexWrap: reducido ? 'wrap' : 'nowrap',
             justifyContent: reducido ? 'center' : 'flex-start',
@@ -88,14 +108,15 @@ function BandaScroll({ trabajos, onSeleccionar }) {
             <button
               key={t.num}
               type="button"
-              onClick={() => onSeleccionar?.(t)}
+              onClick={(e) => onSeleccionar?.(t, e.currentTarget.getBoundingClientRect())}
               aria-label={`Ver ${t.tag} en grande`}
-              className="group relative shrink-0 overflow-hidden rounded-2xl bg-negro-suave focus:outline-none focus-visible:ring-4 focus-visible:ring-dorado"
+              className="group relative shrink-0 overflow-hidden bg-negro-suave focus:outline-none focus-visible:ring-4 focus-visible:ring-dorado"
               style={{
                 width: t.ancho,
                 height: t.alto,
-                // El desfase vertical es lo que rompe la línea recta
-                transform: reducido ? 'none' : `translateY(${t.desfase}px)`,
+                transform: reducido ? 'none' : `scale(${escala})`,
+                // Vuelve con un rebote suave al detenerse el scroll
+                transition: 'transform 420ms cubic-bezier(0.22, 1, 0.36, 1)',
               }}
             >
               <img
@@ -107,7 +128,7 @@ function BandaScroll({ trabajos, onSeleccionar }) {
               />
 
               {/* El velo se abre al pasar el cursor y deja leer el nombre */}
-              <div className="absolute inset-0 bg-gradient-to-t from-negro-barber/90 via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="absolute inset-0 bg-linear-to-t from-negro-barber/90 via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500" />
 
               <span className="absolute top-4 left-4 text-[10px] font-black tracking-[0.2em] text-dorado/80">
                 {t.num}
@@ -123,9 +144,9 @@ function BandaScroll({ trabajos, onSeleccionar }) {
         {!reducido && (
           <>
             {/* Barra de avance del recorrido */}
-            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-40 h-[3px] bg-beige/15 rounded-full overflow-hidden">
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-40 h-0.75 bg-beige/15 overflow-hidden">
               <div
-                className="h-full bg-dorado rounded-full"
+                className="h-full bg-dorado"
                 style={{ width: `${avance * 100}%` }}
               />
             </div>
