@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import api from '../api';
 import {
   FaPlus, FaCamera, FaScissors, FaBoxOpen, FaX, FaTrash,
@@ -10,6 +10,8 @@ import {
   FaAddressBook, FaKey
 } from 'react-icons/fa6';
 import { io } from 'socket.io-client';
+import { useListaPaginada } from '../hooks/useListaPaginada';
+import { ControlesLista, Paginacion, EstadoLista } from '../components/ControlesLista';
 
 const DIAS_SEMANA = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
@@ -28,14 +30,19 @@ function BarberDashboard() {
   const [clienteStats, setClienteStats] = useState(null);
   const [cargandoStats, setCargandoStats] = useState(false);
 
-  const [directorio, setDirectorio] = useState([]);
-  const [dirPage, setDirPage] = useState(1);
-  const [dirTotalPaginas, setDirTotalPaginas] = useState(1);
-  const [dirTotal, setDirTotal] = useState(0);
-  const [dirBuscar, setDirBuscar] = useState('');
-  const [dirOrden, setDirOrden] = useState('nombre');
-  const [cargandoDir, setCargandoDir] = useState(false);
+  // El directorio usa el mismo hook que las citas; antes tenía su propia copia
+  // de página, búsqueda y orden escritas a mano.
+  const listaClientes = useListaPaginada('/clientes/directorio', {
+    activo: tabActiva === 'clientes',
+    filtrosIniciales: { orden: 'nombre', filtro: 'todos' },
+    limite: 12,
+  });
+
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
+
+  // El socket se monta una sola vez; esta referencia le da acceso siempre a la
+  // versión actual de la recarga sin tener que reconectar en cada render.
+  const refrescarCitas = useRef(null);
   const [passwordTemporal, setPasswordTemporal] = useState(null);
 
   // La contraseña temporal se descarta al abrir o cerrar el modal, para que
@@ -54,6 +61,13 @@ function BarberDashboard() {
 
   const [tabActiva, setTabActiva] = useState('citas');
   const [filtroCitas, setFiltroCitas] = useState('proximas');
+
+  // Las citas ya no se traen todas de golpe: el historial crece sin límite
+  const listaCitas = useListaPaginada('/citas/listado', {
+    activo: tabActiva === 'citas',
+    filtrosIniciales: { filtro: 'proximas' },
+    limite: 12,
+  });
   const [mostrarForm, setMostrarForm] = useState(false);
   const [menuMovil, setMenuMovil] = useState(false);
   const [itemAEditar, setItemAEditar] = useState(null);
@@ -78,11 +92,15 @@ function BarberDashboard() {
     const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
 
     socket.on('notificar_cita', (nuevaCita) => {
+      // Alimenta el conjunto que usan las estadísticas
       setCitas(prev => {
         const existe = prev.find(c => c._id === nuevaCita._id);
         if (existe) return prev.map(c => c._id === nuevaCita._id ? nuevaCita : c);
         return [nuevaCita, ...prev];
       });
+      // Y recarga la página actual de la agenda, para que la cita nueva
+      // aparezca en el lugar que le toca según el orden y el filtro
+      refrescarCitas.current?.();
       mostrarNotificacion(`Agenda actualizada: ${nuevaCita.cliente?.nombre || nuevaCita.nombreInvitado}`);
     });
 
@@ -100,7 +118,7 @@ function BarberDashboard() {
         setCargandoStats(true);
         const [resStats] = await Promise.all([
           api.get('/clientes/estadisticas', { headers: { Authorization: `Bearer ${token}` } }),
-          cargarDirectorio(1, '', 'nombre')
+          Promise.resolve()
         ]);
         setClienteStats(resStats.data);
         setCargandoStats(false);
@@ -119,34 +137,19 @@ function BarberDashboard() {
         return;
       }
 
-      const endpoint = tabActiva === 'citas' ? '/citas' : `/${tabActiva}?admin=true`;
-      const res = await api.get(endpoint, { headers: { Authorization: `Bearer ${token}` } });
-      if (tabActiva === 'citas') setCitas(res.data);
-      else setItems(res.data);
+      // Las citas las trae su propio hook paginado, no hace falta pedirlas aquí
+      if (tabActiva === 'citas') return;
+
+      const res = await api.get(`/${tabActiva}?admin=true`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setItems(res.data);
     } catch (err) {
       mostrarNotificacion('Error al conectar con el servidor', 'error');
       setCargandoStats(false);
     }
   };
 
-  const cargarDirectorio = async (pagina = 1, buscar = dirBuscar, orden = dirOrden) => {
-    setCargandoDir(true);
-    try {
-      const token = localStorage.getItem('token');
-      const res = await api.get(
-        `/clientes/directorio?pagina=${pagina}&buscar=${encodeURIComponent(buscar)}&orden=${orden}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      setDirectorio(res.data.clientes);
-      setDirTotalPaginas(res.data.totalPaginas);
-      setDirTotal(res.data.total);
-      setDirPage(res.data.paginaActual);
-    } catch {
-      mostrarNotificacion('Error al cargar el directorio', 'error');
-    } finally {
-      setCargandoDir(false);
-    }
-  };
 
   const ejecutarAccion = async (id, accion) => {
     try {
@@ -155,7 +158,7 @@ function BarberDashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
       mostrarNotificacion('Acción ejecutada con éxito');
-      setDirectorio(prev => prev.map(c => c._id === id ? res.data.usuario : c));
+      listaClientes.actualizarElemento(id, res.data.usuario);
       if (clienteSeleccionado?._id === id) setClienteSeleccionado(res.data.usuario);
 
       // La contraseña temporal solo viaja en esta respuesta: se muestra y ya
@@ -256,6 +259,7 @@ function BarberDashboard() {
       mostrarNotificacion('Guardado con éxito');
       cerrarTodo();
       cargarDatos();
+      if (tabActiva === 'citas') listaCitas.recargar();
     } catch (err) {
       mostrarNotificacion('Error: ' + (err.response?.data?.mensaje || 'No se pudo guardar'), 'error');
     }
@@ -283,6 +287,7 @@ function BarberDashboard() {
       await api.delete(`/${tabActiva}/${id}`, { headers: { Authorization: `Bearer ${token}` } });
       mostrarNotificacion('Eliminado correctamente');
       cargarDatos();
+      if (tabActiva === 'citas') listaCitas.recargar();
     } catch (err) { mostrarNotificacion('Error al eliminar', 'error'); }
   };
 
@@ -317,14 +322,24 @@ function BarberDashboard() {
 
   const stats = calcularEstadisticas();
 
-  const ahora = new Date();
-  const citasMostradas = citas.filter(cita => {
-    const esPasada = new Date(cita.fechaHora) < ahora;
-    return filtroCitas === 'proximas' ? !esPasada : esPasada;
-  });
-  if (filtroCitas === 'pasadas') {
-    citasMostradas.sort((a, b) => new Date(b.fechaHora) - new Date(a.fechaHora));
-  }
+  // El backend ya devuelve filtrado y ordenado según la pestaña
+  const citasMostradas = listaCitas.datos;
+
+  // Mantiene la referencia apuntando a la recarga vigente
+  refrescarCitas.current = listaCitas.recargar;
+
+  // Servicios y productos son pocos: se filtran en memoria sobre lo ya cargado
+  const [buscarItems, setBuscarItems] = useState('');
+  const itemsMostrados = buscarItems.trim()
+    ? items.filter(i =>
+        (i.nombre || '').toLowerCase().includes(buscarItems.toLowerCase()) ||
+        (i.descripcion || '').toLowerCase().includes(buscarItems.toLowerCase()))
+    : items;
+
+  const cambiarFiltroCitas = (nuevo) => {
+    setFiltroCitas(nuevo);
+    listaCitas.cambiarFiltro('filtro', nuevo);
+  };
 
   const tabItems = [
     { id: 'citas',        icon: <FaCalendarCheck />, label: 'Agenda' },
@@ -564,44 +579,51 @@ function BarberDashboard() {
 
                 {/* ── DIRECTORIO PAGINADO ── */}
                 <div className="bg-white rounded-2xl shadow-sm p-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                    <h3 className="font-black text-negro-barber uppercase tracking-tight flex items-center gap-2">
-                      <FaAddressBook className="text-dorado" /> Directorio
-                      <span className="text-xs font-bold text-gray-400 normal-case tracking-normal">({dirTotal} clientes)</span>
-                    </h3>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <div className="relative">
-                        <FaMagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
-                        <input
-                          type="text"
-                          placeholder="Buscar por nombre, email..."
-                          value={dirBuscar}
-                          onChange={e => {
-                            setDirBuscar(e.target.value);
-                            cargarDirectorio(1, e.target.value, dirOrden);
-                          }}
-                          className="pl-8 pr-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:border-dorado focus:outline-none w-full sm:w-52"
-                        />
-                      </div>
-                      <select
-                        value={dirOrden}
-                        onChange={e => { setDirOrden(e.target.value); cargarDirectorio(1, dirBuscar, e.target.value); }}
-                        className="text-xs font-bold bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 focus:border-dorado focus:outline-none"
-                      >
-                        <option value="nombre">A–Z</option>
-                        <option value="totalVisitas">Más visitas</option>
-                        <option value="totalGastado">Más gasto</option>
-                        <option value="ultimaVisita">Última visita</option>
-                        <option value="recientes">Más recientes</option>
-                      </select>
-                    </div>
-                  </div>
+                  <h3 className="font-black text-negro-barber uppercase tracking-tight flex items-center gap-2 mb-5">
+                    <FaAddressBook className="text-dorado" aria-hidden="true" /> Directorio
+                  </h3>
 
-                  {cargandoDir ? (
+                  <ControlesLista
+                    buscar={listaClientes.buscar}
+                    onBuscar={listaClientes.setBuscar}
+                    placeholder="Buscar por nombre, email o WhatsApp..."
+                    total={listaClientes.total}
+                    etiquetaTotal={listaClientes.total === 1 ? 'cliente' : 'clientes'}
+                    filtros={[
+                      {
+                        clave: 'filtro',
+                        etiqueta: 'Filtrar clientes',
+                        valor: listaClientes.filtros.filtro || 'todos',
+                        onChange: (v) => listaClientes.cambiarFiltro('filtro', v),
+                        opciones: [
+                          { valor: 'todos', texto: 'Todos' },
+                          { valor: 'conPremio', texto: 'Con premio' },
+                          { valor: 'inactivos', texto: 'Inactivos' },
+                          { valor: 'nuevos', texto: 'Nuevos' },
+                          { valor: 'bloqueados', texto: 'Bloqueados' },
+                        ],
+                      },
+                      {
+                        clave: 'orden',
+                        etiqueta: 'Ordenar clientes',
+                        valor: listaClientes.filtros.orden || 'nombre',
+                        onChange: (v) => listaClientes.cambiarFiltro('orden', v),
+                        opciones: [
+                          { valor: 'nombre', texto: 'A–Z' },
+                          { valor: 'totalVisitas', texto: 'Más visitas' },
+                          { valor: 'totalGastado', texto: 'Más gasto' },
+                          { valor: 'ultimaVisita', texto: 'Última visita' },
+                          { valor: 'recientes', texto: 'Más recientes' },
+                        ],
+                      },
+                    ]}
+                  />
+
+                  {listaClientes.cargando ? (
                     <div className="flex justify-center py-10">
                       <div className="w-8 h-8 border-4 border-gray-200 border-t-dorado rounded-full animate-spin" />
                     </div>
-                  ) : directorio.length === 0 ? (
+                  ) : listaClientes.datos.length === 0 ? (
                     <p className="text-center text-gray-400 py-8">No se encontraron clientes.</p>
                   ) : (
                     <div className="overflow-x-auto">
@@ -618,7 +640,7 @@ function BarberDashboard() {
                           </tr>
                         </thead>
                         <tbody>
-                          {directorio.map(c => {
+                          {listaClientes.datos.map(c => {
                             const nivelInfo = NIVELES[c.nivel] || NIVELES.nuevo;
                             return (
                               <tr key={c._id} className="border-b border-gray-50 hover:bg-gray-50 transition">
@@ -663,28 +685,12 @@ function BarberDashboard() {
                     </div>
                   )}
 
-                  {/* Paginación */}
-                  {dirTotalPaginas > 1 && (
-                    <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
-                      <button
-                        disabled={dirPage <= 1}
-                        onClick={() => cargarDirectorio(dirPage - 1)}
-                        className="flex items-center gap-1 px-4 py-2 text-xs font-black rounded-xl bg-gray-100 text-gray-500 hover:bg-dorado/20 hover:text-negro-barber transition disabled:opacity-30 disabled:cursor-not-allowed"
-                      >
-                        <FaChevronLeft /> Anterior
-                      </button>
-                      <span className="text-xs text-gray-400 font-bold">
-                        Página {dirPage} de {dirTotalPaginas}
-                      </span>
-                      <button
-                        disabled={dirPage >= dirTotalPaginas}
-                        onClick={() => cargarDirectorio(dirPage + 1)}
-                        className="flex items-center gap-1 px-4 py-2 text-xs font-black rounded-xl bg-gray-100 text-gray-500 hover:bg-dorado/20 hover:text-negro-barber transition disabled:opacity-30 disabled:cursor-not-allowed"
-                      >
-                        Siguiente <FaChevronRight />
-                      </button>
-                    </div>
-                  )}
+                  <Paginacion
+                    pagina={listaClientes.pagina}
+                    totalPaginas={listaClientes.totalPaginas}
+                    onCambiar={listaClientes.irAPagina}
+                    cargando={listaClientes.cargando}
+                  />
                 </div>
               </>
             ) : (
@@ -991,22 +997,64 @@ function BarberDashboard() {
             TAB: CITAS — sub-tabs
         ══════════════════════════════════════ */}
         {tabActiva === 'citas' && (
-          <div className="flex gap-2 mb-6 bg-gray-200 p-1.5 rounded-xl w-full sm:w-fit">
-            <button onClick={() => setFiltroCitas('proximas')} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${filtroCitas === 'proximas' ? 'bg-white text-negro-barber shadow-md' : 'text-gray-500 hover:text-negro-barber'}`}>
-              Próximas
-            </button>
-            <button onClick={() => setFiltroCitas('pasadas')} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${filtroCitas === 'pasadas' ? 'bg-white text-negro-barber shadow-md' : 'text-gray-500 hover:text-negro-barber'}`}>
-              Historial
-            </button>
-          </div>
+          <>
+            <div className="flex gap-2 mb-6 bg-gray-200 p-1.5 rounded-xl w-full sm:w-fit">
+              <button onClick={() => cambiarFiltroCitas('proximas')} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${filtroCitas === 'proximas' ? 'bg-white text-negro-barber shadow-md' : 'text-gray-500 hover:text-negro-barber'}`}>
+                Próximas
+              </button>
+              <button onClick={() => cambiarFiltroCitas('pasadas')} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${filtroCitas === 'pasadas' ? 'bg-white text-negro-barber shadow-md' : 'text-gray-500 hover:text-negro-barber'}`}>
+                Historial
+              </button>
+            </div>
+
+            <ControlesLista
+              buscar={listaCitas.buscar}
+              onBuscar={listaCitas.setBuscar}
+              placeholder="Buscar por cliente o servicio..."
+              total={listaCitas.total}
+              etiquetaTotal={listaCitas.total === 1 ? 'cita' : 'citas'}
+              filtros={filtroCitas === 'pasadas' ? [{
+                clave: 'estado',
+                etiqueta: 'Estado de la cita',
+                valor: listaCitas.filtros.estado || 'todos',
+                onChange: (v) => listaCitas.cambiarFiltro('estado', v),
+                opciones: [
+                  { valor: 'todos', texto: 'Todas' },
+                  { valor: 'completada', texto: 'Completadas' },
+                  { valor: 'cancelada', texto: 'Canceladas' },
+                ],
+              }] : []}
+            />
+          </>
+        )}
+
+        {(tabActiva === 'servicios' || tabActiva === 'productos') && (
+          <ControlesLista
+            buscar={buscarItems}
+            onBuscar={setBuscarItems}
+            placeholder={`Buscar ${tabActiva}...`}
+            total={itemsMostrados.length}
+            etiquetaTotal={tabActiva === 'servicios'
+              ? (itemsMostrados.length === 1 ? 'servicio' : 'servicios')
+              : (itemsMostrados.length === 1 ? 'producto' : 'productos')}
+          />
         )}
 
         {/* ── GRID CITAS / SERVICIOS / PRODUCTOS ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {tabActiva === 'citas' ? (
-            citasMostradas.length === 0 ? (
-              <div className="col-span-full py-20 text-center">
-                <p className="text-gray-400 font-bold text-lg">No hay citas en esta sección.</p>
+            listaCitas.cargando || listaCitas.error || citasMostradas.length === 0 ? (
+              <div className="col-span-full">
+                <EstadoLista
+                  cargando={listaCitas.cargando}
+                  error={listaCitas.error}
+                  vacio={citasMostradas.length === 0}
+                  mensajeVacio={
+                    listaCitas.buscar
+                      ? `Sin resultados para "${listaCitas.buscar}".`
+                      : 'No hay citas en esta sección.'
+                  }
+                />
               </div>
             ) : (
               citasMostradas.map(cita => (
@@ -1074,7 +1122,7 @@ function BarberDashboard() {
               ))
             )
           ) : tabActiva !== 'estadisticas' && tabActiva !== 'clientes' && (
-            items.map(item => (
+            itemsMostrados.map(item => (
               <div key={item._id} className={`bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden group transition-all ${item.activo === false ? 'opacity-70 grayscale-50' : ''}`}>
                 <div className="h-44 bg-gray-200 relative overflow-hidden">
                   {item.activo === false && (
@@ -1103,6 +1151,15 @@ function BarberDashboard() {
             ))
           )}
         </div>
+
+        {tabActiva === 'citas' && (
+          <Paginacion
+            pagina={listaCitas.pagina}
+            totalPaginas={listaCitas.totalPaginas}
+            onCambiar={listaCitas.irAPagina}
+            cargando={listaCitas.cargando}
+          />
+        )}
 
         {/* ── MODAL FORMULARIO ── */}
         {mostrarForm && (
