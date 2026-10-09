@@ -30,14 +30,6 @@ function BarberDashboard() {
   const [clienteStats, setClienteStats] = useState(null);
   const [cargandoStats, setCargandoStats] = useState(false);
 
-  // El directorio usa el mismo hook que las citas; antes tenía su propia copia
-  // de página, búsqueda y orden escritas a mano.
-  const listaClientes = useListaPaginada('/clientes/directorio', {
-    activo: tabActiva === 'clientes',
-    filtrosIniciales: { orden: 'nombre', filtro: 'todos' },
-    limite: 12,
-  });
-
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
 
   // El socket se monta una sola vez; esta referencia le da acceso siempre a la
@@ -62,10 +54,20 @@ function BarberDashboard() {
   const [tabActiva, setTabActiva] = useState('citas');
   const [filtroCitas, setFiltroCitas] = useState('proximas');
 
+  // Ambas listas dependen de tabActiva, así que se declaran después de él.
+
   // Las citas ya no se traen todas de golpe: el historial crece sin límite
   const listaCitas = useListaPaginada('/citas/listado', {
     activo: tabActiva === 'citas',
     filtrosIniciales: { filtro: 'proximas' },
+    limite: 12,
+  });
+
+  // El directorio usa el mismo hook; antes tenía su propia copia de página,
+  // búsqueda y orden escritas a mano.
+  const listaClientes = useListaPaginada('/clientes/directorio', {
+    activo: tabActiva === 'clientes',
+    filtrosIniciales: { orden: 'nombre', filtro: 'todos' },
     limite: 12,
   });
   const [mostrarForm, setMostrarForm] = useState(false);
