@@ -17,6 +17,8 @@ function BandaScroll({ trabajos, onSeleccionar }) {
 
   const ultimaPos = useRef(0);
   const temporizadorParo = useRef(null);
+  // Velocidad suavizada: sin esto cada muesca de la rueda da un tirón seco
+  const velocidadSuave = useRef(0);
 
   useEffect(() => {
     const consulta = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -46,13 +48,24 @@ function BandaScroll({ trabajos, onSeleccionar }) {
       const y = window.scrollY;
       const velocidad = Math.abs(y - ultimaPos.current);
       ultimaPos.current = y;
-      // Tope en 0.14 para que encoja lo justo y no se sienta un salto
-      setEscala(1 - Math.min(velocidad / 260, 0.14));
+
+      // Promedio ponderado con el valor anterior: un tirón suelto de la rueda
+      // apenas mueve la aguja, pero un desplazamiento sostenido sí la sube.
+      // Así el encogimiento acompaña al movimiento en vez de parpadear.
+      velocidadSuave.current = velocidadSuave.current * 0.72 + velocidad * 0.28;
+
+      // Umbral: por debajo de 18px por fotograma no se encoge nada, para que
+      // un recorrido pausado se vea limpio
+      const exceso = Math.max(velocidadSuave.current - 18, 0);
+      setEscala(1 - Math.min(exceso / 200, 0.12));
 
       // Sin más eventos de scroll nadie restauraría el tamaño, así que se
       // programa la vuelta a la normalidad en cuanto el movimiento se detiene
       clearTimeout(temporizadorParo.current);
-      temporizadorParo.current = setTimeout(() => setEscala(1), 140);
+      temporizadorParo.current = setTimeout(() => {
+        velocidadSuave.current = 0;
+        setEscala(1);
+      }, 140);
 
       const { top, height } = nodo.getBoundingClientRect();
       const recorrido = height - window.innerHeight;
