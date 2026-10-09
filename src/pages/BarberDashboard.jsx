@@ -12,6 +12,7 @@ import {
 import { io } from 'socket.io-client';
 import { useListaPaginada } from '../hooks/useListaPaginada';
 import { ControlesLista, Paginacion, EstadoLista } from '../components/ControlesLista';
+import SelectorCliente from '../components/SelectorCliente';
 
 const DIAS_SEMANA = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
@@ -223,6 +224,11 @@ function BarberDashboard() {
     const token = localStorage.getItem('token');
     try {
       if (tabActiva === 'citas') {
+        // El selector de cliente ya no es un <select required>
+        if (!itemAEditar && !form.esInvitado && !form.cliente) {
+          mostrarNotificacion('Elige un cliente o marca "cliente nuevo/de paso"', 'error');
+          return;
+        }
         const fechaParaEnviar = new Date(form.fechaHora).toISOString();
         if (itemAEditar) {
           await api.put(`/citas/${itemAEditar._id}`, {
@@ -327,8 +333,11 @@ function BarberDashboard() {
   // El backend ya devuelve filtrado y ordenado según la pestaña
   const citasMostradas = listaCitas.datos;
 
-  // Mantiene la referencia apuntando a la recarga vigente
-  refrescarCitas.current = listaCitas.recargar;
+  // Mantiene la referencia apuntando a la recarga vigente. Va en un efecto
+  // porque escribir en un ref durante el render rompe las reglas de React.
+  useEffect(() => {
+    refrescarCitas.current = listaCitas.recargar;
+  });
 
   // Servicios y productos son pocos: se filtran en memoria sobre lo ya cargado
   const [buscarItems, setBuscarItems] = useState('');
@@ -1277,13 +1286,11 @@ function BarberDashboard() {
                             <input type="text" required value={form.nombreInvitado} onChange={(e) => setForm({ ...form, nombreInvitado: e.target.value })} placeholder="Ej. Carlos G." className="w-full mt-1 p-4 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-dorado font-bold" />
                           </div>
                         ) : (
-                          <div>
-                            <label className="text-xs font-black uppercase text-gray-400 tracking-widest">Seleccionar Cliente</label>
-                            <select required value={form.cliente} onChange={(e) => setForm({ ...form, cliente: e.target.value })} className="w-full mt-1 p-4 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-dorado font-bold">
-                              <option value="">-- Elige un cliente registrado --</option>
-                              {usuarios.map(u => <option key={u._id} value={u._id}>{u.nombre} ({u.whatsapp})</option>)}
-                            </select>
-                          </div>
+                          <SelectorCliente
+                            usuarios={usuarios}
+                            valor={form.cliente}
+                            onSeleccionar={(id) => setForm({ ...form, cliente: id })}
+                          />
                         )}
                         <div>
                           <label className="text-xs font-black uppercase text-gray-400 tracking-widest">Servicio</label>
