@@ -13,17 +13,28 @@ import img6 from '../assets/portfolio/WhatsApp Image 2026-06-16 at 8.10.27 AM (2
 import img7 from '../assets/portfolio/WhatsApp Image 2026-06-16 at 8.13.19 AM.jpeg';
 import img8 from '../assets/portfolio/WhatsApp Image 2026-06-16 at 8.14.06 AM.jpeg';
 import img9 from '../assets/portfolio/WhatsApp Image 2026-06-16 at 8.14.31 AM.jpeg';
+import img10 from '../assets/portfolio/trabajo-10.jpeg';
+import img11 from '../assets/portfolio/trabajo-11.jpeg';
+import img12 from '../assets/portfolio/trabajo-12.jpeg';
+import videoFacial from '../assets/portfolio/trabajo-facial.mp4';
+import portadaFacial from '../assets/portfolio/trabajo-facial-portada.jpg';
 
+// Sin nombres visibles: sólo foto o video. Los tamaños alternan grande y chico
+// para que la banda no se lea como una fila pareja.
 const trabajos = [
-  { img: img1, tag: 'Fade Clásico',      num: '01', objPos: '50% 55%', ancho: 300, alto: '56vh' },
-  { img: img2, tag: 'Corte Texturizado', num: '02', objPos: '50% 38%', ancho: 230, alto: '41vh' },
-  { img: img3, tag: 'Corte Clásico',     num: '03', objPos: '65% 68%', ancho: 340, alto: '62vh' },
-  { img: img4, tag: 'Rizado Fade',       num: '04', objPos: '50% 32%', ancho: 240, alto: '44vh' },
-  { img: img5, tag: 'Slick Back + Barba',num: '05', objPos: '50% 28%', ancho: 380, alto: '70vh' },
-  { img: img6, tag: 'Bowl Fade',         num: '06', objPos: '50% 62%', ancho: 250, alto: '45vh' },
-  { img: img7, tag: 'Pompadour Fade',    num: '07', objPos: '50% 28%', ancho: 320, alto: '58vh' },
-  { img: img8, tag: 'Ondas Texturizadas',num: '08', objPos: '50% 33%', ancho: 230, alto: '40vh' },
-  { img: img9, tag: 'Corte Limpio',      num: '09', objPos: '50% 28%', ancho: 350, alto: '64vh' },
+  { id: 1,  img: img1,  objPos: '50% 55%', ancho: 300, alto: '56vh' },
+  { id: 2,  img: img2,  objPos: '50% 38%', ancho: 230, alto: '41vh' },
+  { id: 3,  img: img10, objPos: '55% 62%', ancho: 340, alto: '64vh' },
+  { id: 4,  img: img4,  objPos: '50% 32%', ancho: 240, alto: '44vh' },
+  { id: 5,  img: img5,  objPos: '50% 28%', ancho: 380, alto: '70vh' },
+  { id: 6,  tipo: 'video', video: videoFacial, img: portadaFacial, objPos: '50% 58%', ancho: 260, alto: '50vh' },
+  { id: 7,  img: img3,  objPos: '65% 68%', ancho: 340, alto: '62vh' },
+  { id: 8,  img: img11, objPos: '45% 52%', ancho: 240, alto: '45vh' },
+  { id: 9,  img: img7,  objPos: '50% 28%', ancho: 320, alto: '58vh' },
+  { id: 10, img: img6,  objPos: '50% 62%', ancho: 250, alto: '45vh' },
+  { id: 11, img: img12, objPos: '35% 58%', ancho: 350, alto: '66vh' },
+  { id: 12, img: img8,  objPos: '50% 33%', ancho: 230, alto: '40vh' },
+  { id: 13, img: img9,  objPos: '50% 28%', ancho: 350, alto: '64vh' },
 ];
 
 const stats = [

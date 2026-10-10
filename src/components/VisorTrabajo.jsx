@@ -35,13 +35,28 @@ function VisorTrabajo({ trabajo, rect, onCerrar }) {
   }, [cerrar]);
 
   const origen = rect || { top: 0, left: 0, width: 0, height: 0 };
+  const curva = '420ms cubic-bezier(0.22, 1, 0.36, 1)';
+
+  // Mismo recorrido para foto o video: parte del rectángulo de la miniatura y
+  // termina centrado a 72% del alto de pantalla
+  const estiloMedio = {
+    position: 'fixed',
+    objectPosition: trabajo.objPos,
+    top: abierto ? '50%' : `${origen.top}px`,
+    left: abierto ? '50%' : `${origen.left}px`,
+    width: abierto ? 'auto' : `${origen.width}px`,
+    height: abierto ? '72vh' : `${origen.height}px`,
+    maxWidth: '92vw',
+    transform: abierto ? 'translate(-50%, -50%)' : 'none',
+    transition: `top ${curva}, left ${curva}, width ${curva}, height ${curva}, transform ${curva}`,
+  };
 
   return (
     <div
       className="fixed inset-0 z-100 flex items-center justify-center"
       role="dialog"
       aria-modal="true"
-      aria-label={trabajo.tag}
+      aria-label="Trabajo ampliado"
       onClick={cerrar}
     >
       {/* Fondo que se funde al mismo ritmo que crece la imagen */}
@@ -59,36 +74,27 @@ function VisorTrabajo({ trabajo, rect, onCerrar }) {
         <FaX />
       </button>
 
-      <img
-        src={trabajo.img}
-        alt={trabajo.tag}
-        onClick={(e) => e.stopPropagation()}
-        className="shadow-2xl object-cover"
-        style={{
-          position: 'fixed',
-          objectPosition: trabajo.objPos,
-          top: abierto ? '50%' : `${origen.top}px`,
-          left: abierto ? '50%' : `${origen.left}px`,
-          width: abierto ? 'auto' : `${origen.width}px`,
-          height: abierto ? '72vh' : `${origen.height}px`,
-          transform: abierto ? 'translate(-50%, -52%)' : 'none',
-          transition: 'top 420ms cubic-bezier(0.22, 1, 0.36, 1), left 420ms cubic-bezier(0.22, 1, 0.36, 1), width 420ms cubic-bezier(0.22, 1, 0.36, 1), height 420ms cubic-bezier(0.22, 1, 0.36, 1), transform 420ms cubic-bezier(0.22, 1, 0.36, 1)',
-        }}
-      />
-
-      <figcaption
-        className="absolute bottom-12 left-0 right-0 text-center pointer-events-none"
-        style={{
-          opacity: abierto ? 1 : 0,
-          transform: abierto ? 'translateY(0)' : 'translateY(12px)',
-          transition: 'opacity 300ms ease 220ms, transform 300ms ease 220ms',
-        }}
-      >
-        <span className="text-dorado text-[10px] font-black tracking-[0.3em] block mb-1">
-          {trabajo.num}
-        </span>
-        <span className="text-beige font-bold tracking-wide">{trabajo.tag}</span>
-      </figcaption>
+      {trabajo.tipo === 'video' ? (
+        <video
+          src={trabajo.video}
+          poster={trabajo.img}
+          autoPlay
+          muted
+          loop
+          playsInline
+          onClick={(e) => e.stopPropagation()}
+          className="shadow-2xl object-cover"
+          style={estiloMedio}
+        />
+      ) : (
+        <img
+          src={trabajo.img}
+          alt=""
+          onClick={(e) => e.stopPropagation()}
+          className="shadow-2xl object-cover"
+          style={estiloMedio}
+        />
+      )}
     </div>
   );
 }

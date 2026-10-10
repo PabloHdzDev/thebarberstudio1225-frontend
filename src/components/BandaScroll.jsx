@@ -17,25 +17,28 @@ function BandaScroll({ trabajos, onSeleccionar }) {
   // Mientras no se mida el dispositivo se asume el modo simple, que funciona
   // en todos lados
   const [modo, setModo] = useState('simple');
+  // Con reducción de movimiento el video no arranca solo
+  const [sinMovimiento, setSinMovimiento] = useState(false);
 
   const ultimaPos = useRef(0);
   const temporizadorParo = useRef(null);
   const velocidadSuave = useRef(0);
 
   useEffect(() => {
-    const sinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const reducido = window.matchMedia('(prefers-reduced-motion: reduce)');
     // El efecto anclado sólo en pantallas anchas con puntero fino
     const esEscritorio = window.matchMedia('(min-width: 1024px) and (pointer: fine)');
 
     const decidir = () => {
-      setModo(!sinMovimiento.matches && esEscritorio.matches ? 'anclado' : 'simple');
+      setSinMovimiento(reducido.matches);
+      setModo(!reducido.matches && esEscritorio.matches ? 'anclado' : 'simple');
     };
 
     decidir();
-    sinMovimiento.addEventListener('change', decidir);
+    reducido.addEventListener('change', decidir);
     esEscritorio.addEventListener('change', decidir);
     return () => {
-      sinMovimiento.removeEventListener('change', decidir);
+      reducido.removeEventListener('change', decidir);
       esEscritorio.removeEventListener('change', decidir);
     };
   }, []);
@@ -107,10 +110,10 @@ function BandaScroll({ trabajos, onSeleccionar }) {
 
   const tarjetas = trabajos.map((t, i) => (
     <button
-      key={t.num}
+      key={t.id}
       type="button"
       onClick={(e) => onSeleccionar?.(t, e.currentTarget.getBoundingClientRect())}
-      aria-label={`Ver ${t.tag} en grande`}
+      aria-label={`Ver trabajo ${i + 1} de ${trabajos.length} en grande`}
       className="group relative shrink-0 overflow-hidden bg-negro-suave focus:outline-none focus-visible:ring-4 focus-visible:ring-dorado snap-center"
       style={{
         width: t.ancho,
@@ -119,23 +122,30 @@ function BandaScroll({ trabajos, onSeleccionar }) {
         transition: anclado ? 'transform 420ms cubic-bezier(0.22, 1, 0.36, 1)' : 'none',
       }}
     >
-      <img
-        src={t.img}
-        alt={t.tag}
-        loading={i < 3 ? 'eager' : 'lazy'}
-        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-        style={{ objectPosition: t.objPos }}
-      />
-
-      <div className="absolute inset-0 bg-linear-to-t from-negro-barber/90 via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-500" />
-
-      <span className="absolute top-4 left-4 text-[10px] font-black tracking-[0.2em] text-dorado/80">
-        {t.num}
-      </span>
-
-      <span className="absolute bottom-4 left-4 right-4 text-left text-beige font-bold text-sm md:text-base">
-        {t.tag}
-      </span>
+      {t.tipo === 'video' ? (
+        // Silenciado y en bucle: así los navegadores permiten la reproducción
+        // automática. La portada evita el recuadro negro mientras carga.
+        <video
+          src={t.video}
+          poster={t.img}
+          autoPlay={!sinMovimiento}
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          style={{ objectPosition: t.objPos }}
+        />
+      ) : (
+        <img
+          src={t.img}
+          alt=""
+          loading={i < 3 ? 'eager' : 'lazy'}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          style={{ objectPosition: t.objPos }}
+        />
+      )}
     </button>
   ));
 
