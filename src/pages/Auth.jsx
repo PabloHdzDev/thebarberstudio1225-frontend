@@ -58,7 +58,7 @@ function Auth() {
         {/* Encabezado con Identidad Visual */}
         <div className="bg-negro-barber p-10 text-center border-b-4 border-dorado">
           <h1 className="text-white text-3xl font-black tracking-tighter">
-            BARBER <span className="text-dorado">IMPERIO</span>
+            The Barber Studio 1225
           </h1>
           <p className="text-gray-400 mt-2 uppercase text-xs tracking-[0.3em]">
             {esLogin ? 'Bienvenido de vuelta' : 'Únete a la élite'}
