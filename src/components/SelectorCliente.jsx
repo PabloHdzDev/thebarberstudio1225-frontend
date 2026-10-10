@@ -43,10 +43,12 @@ function SelectorCliente({ usuarios, valor, onSeleccionar }) {
           </div>
 
           <div className="flex-1 min-w-0">
-            <p className="font-black text-negro-barber truncate flex items-center gap-2">
-              {elegido.nombre}
+            {/* El nombre va en su propio span: "truncate" no recorta texto
+                suelto dentro de un flex, sólo lo corta sin puntos suspensivos */}
+            <p className="font-black text-negro-barber flex items-center gap-2">
+              <span className="line-clamp-2 wrap-break-word min-w-0">{elegido.nombre}</span>
               {elegido.premioPendiente && (
-                <FaGift className="text-dorado text-xs" title="Tiene premio disponible" />
+                <FaGift className="text-dorado text-xs shrink-0" title="Tiene premio disponible" />
               )}
             </p>
             <p className="text-[11px] text-gray-500 truncate">
@@ -112,9 +114,9 @@ function SelectorCliente({ usuarios, valor, onSeleccionar }) {
                 </div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-negro-barber text-sm truncate flex items-center gap-1.5">
-                    {u.nombre}
-                    {u.premioPendiente && <FaGift className="text-dorado text-[10px]" />}
+                  <p className="font-bold text-negro-barber text-sm leading-snug flex items-center gap-1.5">
+                    <span className="line-clamp-2 wrap-break-word min-w-0">{u.nombre}</span>
+                    {u.premioPendiente && <FaGift className="text-dorado text-[10px] shrink-0" />}
                   </p>
                   <p className="text-[11px] text-gray-400 truncate">{u.whatsapp}</p>
                 </div>
@@ -123,7 +125,7 @@ function SelectorCliente({ usuarios, valor, onSeleccionar }) {
                   {nivel.label}
                 </span>
 
-                <FaCheck className="text-gray-200 text-xs shrink-0" aria-hidden="true" />
+                <FaCheck className="hidden sm:block text-gray-200 text-xs shrink-0" aria-hidden="true" />
               </button>
             );
           })

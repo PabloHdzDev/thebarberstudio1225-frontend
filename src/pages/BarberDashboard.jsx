@@ -13,6 +13,10 @@ import { io } from 'socket.io-client';
 import { useListaPaginada } from '../hooks/useListaPaginada';
 import { ControlesLista, Paginacion, EstadoLista } from '../components/ControlesLista';
 import SelectorCliente from '../components/SelectorCliente';
+import { DURACIONES, etiquetaDuracion, formatoHora12 } from '../utils/tiempo';
+import { enlaceWhatsApp, tieneWhatsApp } from '../utils/whatsapp';
+import CalendarioAgenda from '../components/calendario/CalendarioAgenda';
+import PanelCita from '../components/calendario/PanelCita';
 
 const DIAS_SEMANA = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
@@ -54,6 +58,15 @@ function BarberDashboard() {
 
   const [tabActiva, setTabActiva] = useState('citas');
   const [filtroCitas, setFiltroCitas] = useState('proximas');
+
+  // Agenda: el calendario es la vista principal; la lista conserva historial y buscador
+  const [vistaAgenda, setVistaAgenda] = useState('calendario');
+  const [panelCita, setPanelCita] = useState(null);
+  // Se incrementa para que el calendario vuelva a pedir sus citas
+  const [versionCalendario, setVersionCalendario] = useState(0);
+  // Copia propia del horario para el calendario: la pestaña Horarios edita la
+  // suya en borrador y no debe mover el sombreado hasta que se guarde
+  const [horariosAgenda, setHorariosAgenda] = useState([]);
 
   // Ambas listas dependen de tabActiva, así que se declaran después de él.
 
@@ -188,6 +201,16 @@ function BarberDashboard() {
       }
     }
 
+    // Abrir de madrugada casi siempre es un error de AM/PM (1:00 en lugar de
+    // 13:00), y la página de reservas ofrecería esas horas a los clientes
+    const madrugada = horarios.filter(h => h.abierto && h.apertura < '06:00');
+    if (madrugada.length) {
+      const detalle = madrugada
+        .map(h => `${DIAS_SEMANA[h.diaSemana]}: abre a las ${formatoHora12(h.apertura)}`)
+        .join('\n');
+      if (!window.confirm(`${detalle}\n\n¿Es correcto? Los clientes podrán reservar desde esa hora.`)) return;
+    }
+
     setGuardandoHorarios(true);
     try {
       const token = localStorage.getItem('token');
@@ -195,6 +218,7 @@ function BarberDashboard() {
         headers: { Authorization: `Bearer ${token}` }
       });
       setHorarios(res.data.horarios);
+      setHorariosAgenda(res.data.horarios);
       mostrarNotificacion('Horarios actualizados. Ya aplican para nuevas reservas.');
     } catch (err) {
       mostrarNotificacion(err.response?.data?.mensaje || 'Error al guardar los horarios', 'error');
@@ -218,6 +242,12 @@ function BarberDashboard() {
   };
 
   useEffect(() => { cargarDatos(); }, [tabActiva]);
+
+  useEffect(() => {
+    api.get('/horarios')
+      .then(res => setHorariosAgenda(res.data))
+      .catch(() => {});
+  }, []);
 
   const guardarItem = async (e) => {
     e.preventDefault();
@@ -273,19 +303,48 @@ function BarberDashboard() {
     }
   };
 
-  const abrirModalNuevaCita = () => {
-    cargarCatalogosCita();
-    setItemAEditar(null);
-    setForm({ ...form, fechaHora: '', notas: '', servicio: '', cliente: '', nombreInvitado: '', esInvitado: false });
-    setMostrarForm(true);
+  // Siguiente cuarto de hora libre a partir de ahora
+  const siguienteHueco = () => {
+    const f = new Date();
+    f.setSeconds(0, 0);
+    f.setMinutes(Math.ceil((f.getMinutes() + 1) / 15) * 15);
+    return f;
   };
 
-  const prepararEdicionCita = (cita) => {
-    const date = new Date(cita.fechaHora);
-    const localISODate = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-    setItemAEditar(cita);
-    setForm({ ...form, fechaHora: localISODate, notas: cita.notas || '' });
-    setMostrarForm(true);
+  const abrirPanelCita = (config) => {
+    cargarCatalogosCita();
+    setPanelCita(config);
+  };
+
+  const abrirModalNuevaCita = (fecha = siguienteHueco(), citasSemana = []) =>
+    abrirPanelCita({ modo: 'crear', fecha, citasSemana });
+
+  const prepararEdicionCita = (cita, citasSemana = []) =>
+    abrirPanelCita({
+      modo: 'mover',
+      fecha: new Date(cita.fechaHora),
+      cita: { ...cita, duracionMinutos: cita.duracionMinutos || cita.servicio?.duracionMinutos || 30 },
+      citasSemana,
+    });
+
+  const alGuardarCita = (mensaje) => {
+    setPanelCita(null);
+    mostrarNotificacion(mensaje);
+    setVersionCalendario(v => v + 1);
+    listaCitas.recargar();
+  };
+
+  const cancelarCita = async (cita) => {
+    const nombre = cita.cliente?.nombre || cita.nombreInvitado || 'este cliente';
+    if (!window.confirm(`¿Cancelar la cita de ${nombre}? También se quita de Google Calendar.`)) return;
+    try {
+      await api.delete(`/citas/${cita._id}`);
+      mostrarNotificacion('Cita cancelada');
+      setVersionCalendario(v => v + 1);
+      listaCitas.recargar();
+    } catch (err) {
+      mostrarNotificacion(err.response?.data?.mensaje || 'No se pudo cancelar la cita', 'error');
+    }
   };
 
   const eliminarElemento = async (id) => {
@@ -411,7 +470,7 @@ function BarberDashboard() {
 
           {tabActiva !== 'estadisticas' && tabActiva !== 'clientes' && tabActiva !== 'horarios' && (
             <button
-              onClick={tabActiva === 'citas' ? abrirModalNuevaCita : () => setMostrarForm(true)}
+              onClick={tabActiva === 'citas' ? () => abrirModalNuevaCita() : () => setMostrarForm(true)}
               className="w-full sm:w-auto bg-negro-barber text-dorado px-6 py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-xl"
             >
               <FaPlus /> NUEVO {tabActiva === 'citas' ? 'TURNO' : tabActiva === 'servicios' ? 'SERVICIO' : 'PRODUCTO'}
@@ -459,7 +518,7 @@ function BarberDashboard() {
                             <p className="font-black text-negro-barber">{c.nombre}</p>
                             <p className="text-xs text-gray-400">{c.email}</p>
                           </div>
-                          <a href={`https://wa.me/${c.whatsapp}`} target="_blank" rel="noreferrer" className="bg-green-500 text-white px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1 hover:bg-green-600 transition">
+                          <a href={enlaceWhatsApp(c.whatsapp)} target="_blank" rel="noreferrer" className="bg-green-500 text-white px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1 hover:bg-green-600 transition">
                             <FaWhatsapp /> Contactar
                           </a>
                         </div>
@@ -558,7 +617,7 @@ function BarberDashboard() {
                                 Última: {c.ultimaVisita ? new Date(c.ultimaVisita).toLocaleDateString('es-MX') : '—'}
                               </p>
                             </div>
-                            <a href={`https://wa.me/${c.whatsapp}`} target="_blank" rel="noreferrer" className="text-green-500 hover:text-green-600 text-lg transition">
+                            <a href={enlaceWhatsApp(c.whatsapp)} target="_blank" rel="noreferrer" className="text-green-500 hover:text-green-600 text-lg transition">
                               <FaWhatsapp />
                             </a>
                           </div>
@@ -710,6 +769,21 @@ function BarberDashboard() {
           </div>
         )}
 
+        {/* ── PANEL NUEVA CITA / MOVER CITA ── */}
+        {panelCita && (
+          <PanelCita
+            modo={panelCita.modo}
+            fechaInicial={panelCita.fecha}
+            cita={panelCita.cita}
+            servicios={serviciosList}
+            usuarios={usuarios}
+            horarios={horariosAgenda}
+            citasSemana={panelCita.citasSemana}
+            onCerrar={() => setPanelCita(null)}
+            onGuardado={alGuardarCita}
+          />
+        )}
+
         {/* ── MODAL ACCIONES CLIENTE ── */}
         {clienteSeleccionado && (
           <div className="fixed inset-0 bg-negro-barber/80 backdrop-blur-sm z-100 flex items-center justify-center p-4" onClick={cerrarCliente}>
@@ -771,7 +845,7 @@ function BarberDashboard() {
                 </p>
 
                 <div className="border-t border-gray-100 pt-4 space-y-2">
-                  <a href={`https://wa.me/${clienteSeleccionado.whatsapp}`} target="_blank" rel="noreferrer"
+                  <a href={enlaceWhatsApp(clienteSeleccionado.whatsapp)} target="_blank" rel="noreferrer"
                     className="flex items-center justify-center gap-2 w-full py-3 bg-green-500 text-white rounded-xl font-bold text-sm hover:bg-green-600 transition">
                     <FaWhatsapp /> Contactar por WhatsApp
                   </a>
@@ -807,9 +881,10 @@ function BarberDashboard() {
                           Copiar
                         </button>
                         <a
-                          href={`https://wa.me/${clienteSeleccionado.whatsapp}?text=${encodeURIComponent(
+                          href={enlaceWhatsApp(
+                            clienteSeleccionado.whatsapp,
                             `Hola ${clienteSeleccionado.nombre}, tu contraseña temporal de The Barber Studio 1225 es: ${passwordTemporal}\n\nEntra a https://thebarberstudio1225.vercel.app/login y cámbiala desde tu perfil.`
-                          )}`}
+                          )}
                           target="_blank"
                           rel="noreferrer"
                           className="py-2.5 bg-green-500 text-white rounded-lg font-bold text-xs hover:bg-green-600 transition flex items-center justify-center gap-1.5"
@@ -1008,6 +1083,32 @@ function BarberDashboard() {
             TAB: CITAS — sub-tabs
         ══════════════════════════════════════ */}
         {tabActiva === 'citas' && (
+          <div className="flex gap-2 mb-6 bg-gray-200 p-1.5 rounded-xl w-full sm:w-fit" role="tablist" aria-label="Vista de la agenda">
+            {[['calendario', 'Calendario'], ['lista', 'Lista']].map(([clave, texto]) => (
+              <button
+                key={clave}
+                role="tab"
+                aria-selected={vistaAgenda === clave}
+                onClick={() => setVistaAgenda(clave)}
+                className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${vistaAgenda === clave ? 'bg-negro-barber text-dorado shadow-md' : 'text-gray-500 hover:text-negro-barber'}`}
+              >
+                {texto}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {tabActiva === 'citas' && vistaAgenda === 'calendario' && (
+          <CalendarioAgenda
+            horarios={horariosAgenda}
+            version={versionCalendario}
+            onNuevaCita={abrirModalNuevaCita}
+            onReprogramar={prepararEdicionCita}
+            onEliminar={cancelarCita}
+          />
+        )}
+
+        {tabActiva === 'citas' && vistaAgenda === 'lista' && (
           <>
             <div className="flex gap-2 mb-6 bg-gray-200 p-1.5 rounded-xl w-full sm:w-fit">
               <button onClick={() => cambiarFiltroCitas('proximas')} className={`flex-1 sm:flex-none px-6 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${filtroCitas === 'proximas' ? 'bg-white text-negro-barber shadow-md' : 'text-gray-500 hover:text-negro-barber'}`}>
@@ -1052,7 +1153,7 @@ function BarberDashboard() {
         )}
 
         {/* ── GRID CITAS / SERVICIOS / PRODUCTOS ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 ${tabActiva === 'citas' && vistaAgenda === 'calendario' ? 'hidden' : ''}`}>
           {tabActiva === 'citas' ? (
             listaCitas.cargando || listaCitas.error || citasMostradas.length === 0 ? (
               <div className="col-span-full">
@@ -1078,7 +1179,7 @@ function BarberDashboard() {
                 >
                   <div className="flex justify-between items-start mb-4">
                     <span className={`px-3 py-1 rounded-full text-[10px] md:text-xs font-black uppercase ${cita.esExterno ? 'bg-blue-50 text-blue-600' : 'bg-dorado/10 text-dorado'}`}>
-                      {new Date(cita.fechaHora).toLocaleDateString()} - {new Date(cita.fechaHora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(cita.fechaHora).toLocaleDateString()} - {formatoHora12(cita.fechaHora)}
                     </span>
                     {!cita.esExterno && (
                       <button onClick={() => eliminarElemento(cita._id)} className="text-gray-300 hover:text-red-500 transition"><FaTrash /></button>
@@ -1096,15 +1197,14 @@ function BarberDashboard() {
                     {cita.servicio?.nombre}
                   </p>
 
+                  {/* Las notas las escribe el cliente: se muestran como texto, nunca como HTML */}
                   {cita.notas && (
-                    <div className="text-xs text-gray-400 italic mb-4 line-clamp-3 [&>b]:text-negro-barber"
-                      dangerouslySetInnerHTML={{ __html: cita.notas }}
-                    />
+                    <p className="text-xs text-gray-400 italic mb-4 line-clamp-3 whitespace-pre-line">{cita.notas}</p>
                   )}
 
                   <div className="flex flex-col gap-2 mt-4">
-                    {cita.cliente && (
-                      <a href={`https://wa.me/${cita.cliente.whatsapp}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition">
+                    {tieneWhatsApp(cita.cliente?.whatsapp || cita.contacto?.telefono) && (
+                      <a href={enlaceWhatsApp(cita.cliente?.whatsapp || cita.contacto?.telefono)} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition">
                         <FaWhatsapp /> Contactar
                       </a>
                     )}
@@ -1163,7 +1263,7 @@ function BarberDashboard() {
           )}
         </div>
 
-        {tabActiva === 'citas' && (
+        {tabActiva === 'citas' && vistaAgenda === 'lista' && (
           <Paginacion
             pagina={listaCitas.pagina}
             totalPaginas={listaCitas.totalPaginas}
@@ -1205,7 +1305,9 @@ function BarberDashboard() {
                         <div>
                           <label className="text-[10px] md:text-xs font-black uppercase text-dorado tracking-widest">Duración</label>
                           <select value={form.duracionMinutos} onChange={(e) => setForm({ ...form, duracionMinutos: e.target.value })} className="w-full mt-1 p-3 md:p-4 bg-dorado/5 border-2 border-dorado/20 rounded-xl md:rounded-2xl focus:border-dorado focus:outline-none font-black text-xs">
-                            <option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">1 hora</option>
+                            {DURACIONES.map(min => (
+                              <option key={min} value={min}>{etiquetaDuracion(min)}</option>
+                            ))}
                           </select>
                         </div>
                       ) : (

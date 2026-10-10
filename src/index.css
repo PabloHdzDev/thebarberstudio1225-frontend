@@ -25,3 +25,45 @@
   /* OFERTA */
   --color-rojo-oferta: #A63A3A;
 }
+/* ── Calendario de la agenda ─────────────────────────────────────────── */
+
+/* Horas en que la barbería está cerrada: rayado tenue, se lee sin estorbar */
+@utility bg-rayado {
+  background-color: rgb(0 0 0 / 0.015);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgb(0 0 0 / 0.04) 0 6px,
+    transparent 6px 12px
+  );
+}
+
+@keyframes subir-desde-abajo {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+@keyframes aparecer-suave {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes entrar-desde-derecha {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+@utility animar-subir {
+  animation: subir-desde-abajo 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@utility animar-aparecer {
+  animation: aparecer-suave 180ms ease-out;
+}
+
+@utility animar-panel {
+  animation: entrar-desde-derecha 340ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animar-subir, .animar-aparecer, .animar-panel { animation: none; }
+}

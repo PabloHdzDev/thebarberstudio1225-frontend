@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
+import { formatoHora12 } from '../utils/tiempo';
 import {
   FaScissors, FaCalendarDay, FaClock, FaX, FaTrash, FaPen,
   FaArrowLeft, FaStar, FaGift, FaCheck, FaLock,
@@ -263,7 +264,7 @@ function UserDashboard() {
                   <div key={cita._id} className="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-dorado">
                     <div className="flex justify-between items-start mb-4">
                       <span className="bg-dorado/10 text-dorado px-3 py-1 rounded-full text-[10px] font-black uppercase">
-                        {new Date(cita.fechaHora).toLocaleDateString()} — {new Date(cita.fechaHora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(cita.fechaHora).toLocaleDateString('es-MX')} — {formatoHora12(cita.fechaHora)}
                       </span>
                       {!editable && <span className="text-[10px] font-black text-red-500 uppercase">Bloqueada</span>}
                     </div>

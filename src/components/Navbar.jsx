@@ -13,8 +13,12 @@ function Navbar() {
     window.location.href = '/';
   };
 
+  // En el celular el panel ya trae su propia barra fija con el menú; si esta
+  // también se quedara pegada arriba, su parte de abajo asomaría bajo aquella
+  const fijaSoloEnEscritorio = location.pathname === '/admin';
+
   return (
-    <nav className="bg-negro-barber border-b border-dorado/20 py-4 px-6 flex justify-between items-center sticky top-0 z-50 shadow-xl">
+    <nav className={`bg-negro-barber border-b border-dorado/20 py-4 px-6 flex justify-between items-center ${fijaSoloEnEscritorio ? 'md:sticky' : 'sticky'} top-0 z-50 shadow-xl`}>
       <Link to="/" className="text-arena font-black text-lg tracking-tighter">
         THE BARBER STUDIO 1225
       </Link>

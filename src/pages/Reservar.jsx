@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { FaCalendarDays, FaClock, FaArrowLeft, FaPen, FaGift } from 'react-icons/fa6';
 import api from '../api';
 import { registrarReservaCita } from '../analytics';
+import { formatoHora12 } from '../utils/tiempo';
 
 function Reservar() {
   const { id } = useParams();
@@ -20,28 +21,17 @@ function Reservar() {
   // Horario de la barbería, configurable por el barbero desde su panel
   const [horarioSemanal, setHorarioSemanal] = useState(null);
   
-  // El usuario viene del botón de canjear premio en su perfil
-  const [quiereCanjear, setQuiereCanjear] = useState(false);
+  // El usuario viene del botón de canjear premio en su perfil. Se lee una sola
+  // vez al montar, sin efecto de por medio.
+  const [quiereCanjear] = useState(() => localStorage.getItem('canjearPremio') === 'true');
 
   // El premio solo cubre cortes sencillos: el servicio debe permitirlo
   const esPremio = quiereCanjear && servicio?.aplicaPremio === true;
   const premioNoAplica = quiereCanjear && servicio && !servicio.aplicaPremio;
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) navigate('/login');
-
-    if (localStorage.getItem('canjearPremio') === 'true') {
-      setQuiereCanjear(true);
-    }
+    if (!localStorage.getItem('token')) navigate('/login');
   }, [navigate]);
-
-  useEffect(() => {
-    // Se avisa al barbero en las notas, solo si el premio de verdad aplica
-    if (esPremio) {
-      setNotas('🎁 PREMIO DE LEALTAD: 50% de descuento aplicable al pagar.');
-    }
-  }, [esPremio]);
 
   useEffect(() => {
     const cargarServicio = async () => {
@@ -49,12 +39,16 @@ function Reservar() {
         const res = await api.get('/servicios');
         const servicioEncontrado = res.data.find(s => s._id === id);
         setServicio(servicioEncontrado);
+        // Se avisa al barbero en las notas, solo si el premio de verdad aplica
+        if (quiereCanjear && servicioEncontrado?.aplicaPremio) {
+          setNotas('🎁 PREMIO DE LEALTAD: 50% de descuento aplicable al pagar.');
+        }
       } catch (err) {
         console.error("Error al cargar servicio:", err);
       }
     };
     cargarServicio();
-  }, [id]);
+  }, [id, quiereCanjear]);
 
   useEffect(() => {
     const cargarHorarios = async () => {
@@ -132,7 +126,7 @@ function Reservar() {
         if (horariosDisponibles.length === 0) {
           setMensaje({ texto: 'La agenda de este día está completamente llena o ya es muy tarde.', tipo: 'error' });
         }
-      } catch (error) {
+      } catch {
         setMensaje({ texto: 'Error al verificar disponibilidad con el calendario.', tipo: 'error' });
       } finally {
         setCargandoHoras(false);
@@ -267,7 +261,7 @@ function Reservar() {
               <label className="flex items-center gap-2 text-negro-barber font-black text-xs uppercase tracking-widest mb-3">
                 <FaClock className="text-dorado" /> Selecciona la hora
               </label>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                 {horariosDinamicos.map(h => (
                   <button
                     key={h}
@@ -279,7 +273,7 @@ function Reservar() {
                       : 'bg-gray-100 text-gray-500 hover:bg-dorado/20 hover:text-negro-barber'
                     }`}
                   >
-                    {h}
+                    {formatoHora12(h)}
                   </button>
                 ))}
               </div>
