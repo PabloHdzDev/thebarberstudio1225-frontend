@@ -54,7 +54,7 @@ function Portafolio() {
       {/* ── Header ── */}
       <div className="pt-12 pb-6 px-4 text-center">
         <p className="text-camel tracking-[0.5em] text-xs uppercase mb-6 font-medium">
-          Barber Imperio
+          The Barber Studio 1225
         </p>
         <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black text-white leading-none tracking-tighter">
           NUESTRO
