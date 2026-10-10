@@ -42,23 +42,22 @@ function SelectorCliente({ usuarios, valor, onSeleccionar }) {
             {elegido.nombre.charAt(0).toUpperCase()}
           </div>
 
+          {/* El nivel va debajo del nombre: en el panel lateral, con la
+              etiqueta y el botón a la derecha, el nombre se partía a media palabra */}
           <div className="flex-1 min-w-0">
-            {/* El nombre va en su propio span: "truncate" no recorta texto
-                suelto dentro de un flex, sólo lo corta sin puntos suspensivos */}
             <p className="font-black text-negro-barber flex items-center gap-2">
               <span className="line-clamp-2 wrap-break-word min-w-0">{elegido.nombre}</span>
               {elegido.premioPendiente && (
                 <FaGift className="text-dorado text-xs shrink-0" title="Tiene premio disponible" />
               )}
             </p>
-            <p className="text-[11px] text-gray-500 truncate">
-              {elegido.whatsapp} · {elegido.totalVisitas || 0} visitas
+            <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-gray-500">
+              <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${nivel.color}`}>
+                {nivel.label}
+              </span>
+              <span>{elegido.whatsapp} · {elegido.totalVisitas || 0} visitas</span>
             </p>
           </div>
-
-          <span className={`text-[9px] font-black uppercase px-2 py-1 rounded-full shrink-0 ${nivel.color}`}>
-            {nivel.label}
-          </span>
 
           <button
             type="button"
