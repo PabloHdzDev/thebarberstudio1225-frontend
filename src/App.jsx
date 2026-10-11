@@ -17,6 +17,7 @@ const Reservar = lazy(() => import('./pages/Reservar'));
 const Auth = lazy(() => import('./pages/Auth'));
 const RecuperarPassword = lazy(() => import('./pages/RecuperarPassword'));
 const RestablecerPassword = lazy(() => import('./pages/RestablecerPassword'));
+const VerificarCorreo = lazy(() => import('./pages/VerificarCorreo'));
 const Blog = lazy(() => import('./pages/Blog'));
 const Articulo = lazy(() => import('./pages/Articulo'));
 
@@ -63,6 +64,7 @@ function App() {
               <Route path="/login" element={<Auth />} />
               <Route path="/recuperar" element={<RecuperarPassword />} />
               <Route path="/restablecer/:token" element={<RestablecerPassword />} />
+              <Route path="/verificar-correo/:token" element={<VerificarCorreo />} />
 
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:id" element={<Articulo />} />

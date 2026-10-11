@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaIdCard, FaArrowLeft, FaCircleCheck, FaWhatsapp } from 'react-icons/fa6';
+import { FaIdCard, FaArrowLeft, FaCircleCheck, FaEnvelope } from 'react-icons/fa6';
 import api from '../api';
 
 function RecuperarPassword() {
@@ -43,16 +43,16 @@ function RecuperarPassword() {
               <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-5">
                 <FaCircleCheck className="text-green-500 text-3xl" />
               </div>
-              <h2 className="text-negro-barber font-black text-lg mb-3">Solicitud enviada</h2>
+              <h2 className="text-negro-barber font-black text-lg mb-3">Revisa tu correo</h2>
               <p className="text-gray-500 text-sm leading-relaxed mb-6">
-                Si la cuenta existe, la barbería recibirá tu solicitud y te enviará
-                un enlace por WhatsApp para que crees tu contraseña nueva.
+                Si la cuenta existe, te enviamos un correo con un enlace para que
+                crees tu contraseña nueva.
               </p>
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3 text-left mb-6">
-                <FaWhatsapp className="text-green-500 text-xl shrink-0 mt-0.5" />
+              <div className="bg-dorado/10 border border-dorado/30 rounded-xl p-4 flex items-start gap-3 text-left mb-6">
+                <FaEnvelope className="text-dorado text-xl shrink-0 mt-0.5" />
                 <p className="text-xs text-gray-600 leading-relaxed">
-                  Mantente pendiente de tu WhatsApp. Si en un rato no recibes nada,
-                  puedes escribirle directamente a la barbería.
+                  Si no lo ves en unos minutos, revisa la carpeta de spam. El enlace
+                  vence en 24 horas. ¿No te llegó? Escríbele a la barbería.
                 </p>
               </div>
               <Link
@@ -65,8 +65,8 @@ function RecuperarPassword() {
           ) : (
             <>
               <p className="text-gray-500 text-sm leading-relaxed mb-6">
-                Escribe el correo o el WhatsApp con el que te registraste. La barbería
-                te hará llegar un enlace para crear una contraseña nueva.
+                Escribe el correo o el WhatsApp con el que te registraste y te
+                enviaremos a tu correo un enlace para crear una contraseña nueva.
               </p>
 
               {error && (

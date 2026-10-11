@@ -4,7 +4,7 @@ import { formatoHora12 } from '../utils/tiempo';
 import {
   FaScissors, FaCalendarDay, FaClock, FaX, FaTrash, FaPen,
   FaArrowLeft, FaStar, FaGift, FaCheck, FaLock,
-  FaFire, FaTrophy, FaCoins
+  FaFire, FaTrophy, FaCoins, FaEnvelope
 } from 'react-icons/fa6';
 import { Link } from 'react-router-dom';
 
@@ -28,6 +28,9 @@ function UserDashboard() {
 
   const [modalPasswordAbierto, setModalPasswordAbierto] = useState(false);
   const [formPassword, setFormPassword] = useState({ actual: '', nueva: '' });
+
+  // Recordatorio para confirmar el correo
+  const [confirmacion, setConfirmacion] = useState({ enviando: false, texto: '', ok: false });
 
   const cargarPerfil = async () => {
     try {
@@ -117,6 +120,21 @@ function UserDashboard() {
     }
   };
 
+  const enviarConfirmacion = async () => {
+    setConfirmacion({ enviando: true, texto: '', ok: false });
+    try {
+      const res = await api.post('/auth/reenviar-verificacion');
+      setConfirmacion({ enviando: false, texto: res.data.mensaje, ok: true });
+      if (res.data.verificado) cargarPerfil();
+    } catch (err) {
+      setConfirmacion({
+        enviando: false,
+        texto: err.response?.data?.mensaje || 'No pudimos enviar el correo. Intenta de nuevo.',
+        ok: false,
+      });
+    }
+  };
+
   const manejarCanjearPremio = () => {
     // El flag de localStorage es solo para la UI de Reservar.
     // La validación real ocurre en el backend al crear la cita.
@@ -155,6 +173,39 @@ function UserDashboard() {
             </Link>
           </div>
         </header>
+
+        {/* ── RECORDATORIO: CONFIRMAR CORREO ── */}
+        {perfil?.emailVerificado === false && (
+          <section className="bg-white rounded-2xl shadow-sm border border-dorado/30 border-l-4 border-l-dorado p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="hidden sm:flex w-11 h-11 rounded-full bg-dorado/15 items-center justify-center shrink-0">
+              <FaEnvelope className="text-dorado text-lg" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-black text-negro-barber text-sm flex items-center gap-2">
+                <FaEnvelope className="text-dorado sm:hidden" aria-hidden="true" /> Confirma tu correo
+              </p>
+              <p className="text-xs text-gray-500 leading-relaxed mt-1 wrap-break-word">
+                {perfil.verificacionExpira
+                  ? <>Te enviamos un enlace a <strong className="text-negro-barber">{perfil.email}</strong>. </>
+                  : <>Confirma que <strong className="text-negro-barber">{perfil.email}</strong> es tu correo. </>}
+                Así podremos enviarte el enlace para recuperar tu contraseña si algún día la olvidas.
+                ¿El correo está mal? Avísale a la barbería.
+              </p>
+              {confirmacion.texto && (
+                <p className={`text-xs font-bold mt-2 ${confirmacion.ok ? 'text-green-600' : 'text-red-500'}`} role="status">
+                  {confirmacion.texto}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={enviarConfirmacion}
+              disabled={confirmacion.enviando}
+              className="shrink-0 bg-negro-barber text-dorado px-5 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-dorado hover:text-negro-barber transition-all disabled:opacity-50"
+            >
+              {confirmacion.enviando ? 'Enviando…' : perfil.verificacionExpira ? 'Reenviar enlace' : 'Enviarme el enlace'}
+            </button>
+          </section>
+        )}
 
         {/* ── TARJETA DE LEALTAD ── */}
         <section className="bg-negro-barber p-6 md:p-8 rounded-3xl shadow-xl border border-dorado/20 relative overflow-hidden">
