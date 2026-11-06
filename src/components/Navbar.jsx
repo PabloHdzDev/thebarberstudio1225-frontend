@@ -1,5 +1,6 @@
 // src/components/Navbar.jsx
 import { Link, useLocation } from 'react-router-dom';
+import { useState, useEffect } from "react";
 import { FaCircleUser, FaArrowRightFromBracket, FaTableColumns } from 'react-icons/fa6';
 
 function Navbar() {
@@ -20,7 +21,8 @@ function Navbar() {
   return (
     <nav className={`bg-negro-barber border-b border-dorado/20 py-4 px-6 flex justify-between items-center ${fijaSoloEnEscritorio ? 'md:sticky' : 'sticky'} top-0 z-50 shadow-xl`}>
       <Link to="/" className="text-arena font-black text-lg tracking-tighter">
-        THE BARBER STUDIO 1225
+        <span className="hidden sm:block">THE BARBER STUDIO 1225</span>
+        <span className="sm:hidden">BARBER STUDIO</span>
       </Link>
 
       <div className="flex items-center gap-4">
@@ -41,7 +43,7 @@ function Navbar() {
             {usuario.rol === 'cliente' && location.pathname !== '/perfil' && (
               <Link 
                 to="/perfil" 
-                className="flex items-center gap-2 bg-marron text-beige px-4 py-2 rounded-full font-black text-xs uppercase tracking-widest hover:bg-beige hover:text-marron transition-all"
+                className="flex items-center gap-2 bg-marron text-beige px-4 py-2 rounded-full font-black text-[10px] sm:text-xs uppercase tracking-widest hover:bg-beige hover:text-marron transition-all"
               >
                 <FaCircleUser /> Mis Citas
               </Link>
@@ -51,13 +53,13 @@ function Navbar() {
             {(location.pathname === '/admin' || location.pathname === '/perfil') && (
               <Link 
                 to="/" 
-                className="text-marron border border-marron px-4 py-2 rounded-full font-black text-xs uppercase tracking-widest bg-beige hover:bg-marron hover:text-beige transition-all"
+                className="text-marron border border-marron px-4 py-2 rounded-full font-black text-[10px] sm:text-xs uppercase tracking-widest bg-beige hover:bg-marron hover:text-beige transition-all"
               >
                 Ver Inicio
               </Link>
             )}
 
-            <div className="h-8 w-px bg-gray-700 mx-2 hidden sm:block"></div>
+            <div className="h-8 w-px bg-gray-700 sm:mx-2"></div>
 
             <button
               onClick={cerrarSesion}

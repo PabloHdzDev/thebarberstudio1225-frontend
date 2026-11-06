@@ -513,7 +513,7 @@ function BarberDashboard() {
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {clienteStats.clientesConPremio.map(c => (
-                        <div key={c._id} className="bg-white rounded-xl p-4 flex items-center justify-between shadow-sm">
+                        <div key={c._id} className="bg-white rounded-xl p-4 flex flex-col lg:flex-row gap-2 items-center text-center lg:text-left justify-between shadow-sm overflow-clip">
                           <div>
                             <p className="font-black text-negro-barber">{c.nombre}</p>
                             <p className="text-xs text-gray-400">{c.email}</p>
@@ -1232,7 +1232,7 @@ function BarberDashboard() {
                 </div>
               ))
             )
-          ) : tabActiva !== 'estadisticas' && tabActiva !== 'clientes' && (
+          ) : tabActiva !== 'estadisticas' && tabActiva !== 'clientes' && tabActiva !== 'horarios' && (
             itemsMostrados.map(item => (
               <div key={item._id} className={`bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden group transition-all ${item.activo === false ? 'opacity-70 grayscale-50' : ''}`}>
                 <div className="h-44 bg-gray-200 relative overflow-hidden">

@@ -112,8 +112,8 @@ function Home() {
       
       {/* 1. HERO SECTION */}
       <section className="min-h-screen flex flex-col justify-center items-center text-center px-4 bg-beige text-negro-barber">
-        <h1 className="text-4xl md:text-7xl xl:text-8xl font-black mb-4 tracking-tighter">
-          <span className="block text-2xl md:text-4xl xl:text-5xl">THE</span>
+        <h1 className="text-4xl sm:text-6xl md:text-7xl xl:text-8xl font-black mb-4 tracking-tighter">
+          <span className="block text-xl sm:text-2xl md:text-4xl xl:text-5xl">THE</span>
           BARBER STUDIO
           <div className="flex items-center gap-4 mt-2">
             <span className="ml-5 md:ml-15 flex-1 h-1 bg-negro-suave"></span>
@@ -121,7 +121,7 @@ function Home() {
             <span className="mr-5 md:mr-15 flex-1 h-1 bg-negro-suave"></span>
           </div>
         </h1>
-        <p className="text-xl md:text-2xl text-negro-suave mb-10 max-w-2xl">
+        <p className="text-md sm:text-lg md:text-xl xl:text-2xl text-negro-suave mb-8 md:mb-10 max-w-2xs sm:max-w-sm md:max-w-2xl">
           Más que un corte: estilo, cuidado personal y piel impecable en un solo lugar.
         </p>
         <div className="flex flex-col sm:flex-row gap-4">

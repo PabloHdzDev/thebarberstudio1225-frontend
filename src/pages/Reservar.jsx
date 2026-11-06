@@ -10,6 +10,7 @@ function Reservar() {
   const navigate = useNavigate();
   
   const [servicio, setServicio] = useState(null);
+  const [serviciosAplicables, setServiciosAplicables] = useState([]);
   const [fecha, setFecha] = useState('');
   const [hora, setHora] = useState('');
   const [notas, setNotas] = useState('');
@@ -39,6 +40,7 @@ function Reservar() {
         const res = await api.get('/servicios');
         const servicioEncontrado = res.data.find(s => s._id === id);
         setServicio(servicioEncontrado);
+        setServiciosAplicables(res.data.filter(s => s.aplicaPremio === true));
         // Se avisa al barbero en las notas, solo si el premio de verdad aplica
         if (quiereCanjear && servicioEncontrado?.aplicaPremio) {
           setNotas('🎁 PREMIO DE LEALTAD: 50% de descuento aplicable al pagar.');
@@ -220,7 +222,7 @@ function Reservar() {
 
           {premioNoAplica && (
             <div className="mt-4 bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs font-bold p-3 rounded-xl leading-relaxed">
-              Tu premio no aplica aquí, solo en cortes. Queda guardado para después.
+              Tu premio no aplica aquí, solo en <span className="font-black">{serviciosAplicables.map(s => s.nombre).join(', ')}</span>. Queda guardado para después.
             </div>
           )}
         </div>
