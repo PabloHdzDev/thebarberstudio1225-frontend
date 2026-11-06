@@ -21,14 +21,6 @@ function Reservar() {
 
   // Horario de la barbería, configurable por el barbero desde su panel
   const [horarioSemanal, setHorarioSemanal] = useState(null);
-  
-  // El usuario viene del botón de canjear premio en su perfil. Se lee una sola
-  // vez al montar, sin efecto de por medio.
-  const [quiereCanjear] = useState(() => localStorage.getItem('canjearPremio') === 'true');
-
-  // El premio solo cubre cortes sencillos: el servicio debe permitirlo
-  const esPremio = quiereCanjear && servicio?.aplicaPremio === true;
-  const premioNoAplica = quiereCanjear && servicio && !servicio.aplicaPremio;
 
   useEffect(() => {
     if (!localStorage.getItem('token')) navigate('/login');
@@ -40,17 +32,12 @@ function Reservar() {
         const res = await api.get('/servicios');
         const servicioEncontrado = res.data.find(s => s._id === id);
         setServicio(servicioEncontrado);
-        setServiciosAplicables(res.data.filter(s => s.aplicaPremio === true));
-        // Se avisa al barbero en las notas, solo si el premio de verdad aplica
-        if (quiereCanjear && servicioEncontrado?.aplicaPremio) {
-          setNotas('🎁 PREMIO DE LEALTAD: 50% de descuento aplicable al pagar.');
-        }
       } catch (err) {
         console.error("Error al cargar servicio:", err);
       }
     };
     cargarServicio();
-  }, [id, quiereCanjear]);
+  }, [id]);
 
   useEffect(() => {
     const cargarHorarios = async () => {
@@ -159,21 +146,13 @@ function Reservar() {
           servicio: id,
           fechaHora: fechaSeleccionada.toISOString(),
           notas: notas,
-          // El backend valida que el usuario tenga premioPendiente=true antes de aceptar esto
-          esPremio: esPremio
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Solo se consume el premio si de verdad se aplicó; si el servicio no era
-      // elegible, el cliente conserva su premio para la próxima.
-      if (esPremio) {
-        localStorage.removeItem('canjearPremio');
-      }
-
       // La cita quedó agendada: se reporta como conversión con el precio real cobrado
       registrarReservaCita({
-        valor: esPremio ? Math.round(servicio.precio / 2) : servicio.precio
+        valor: servicio.precio
       });
 
       setMensaje({ texto: '¡Cita agendada con éxito! Te esperamos.', tipo: 'exito' });
@@ -187,10 +166,6 @@ function Reservar() {
     }
   };
 
-  const cancelarReserva = () => {
-    localStorage.removeItem('canjearPremio'); // Limpiamos por si se arrepiente
-  };
-
   if (!servicio) return <div className="min-h-screen bg-negro-barber flex items-center justify-center text-dorado font-bold">CARGANDO SERVICIO...</div>;
 
   return (
@@ -201,30 +176,10 @@ function Reservar() {
           <h2 className="text-dorado text-xs font-black tracking-[0.2em] uppercase mb-2">Reserva tu experiencia</h2>
           <h1 className="text-white text-3xl font-bold">{servicio.nombre}</h1>
           
-          {/* 👇 Lógica visual para mostrar el descuento */}
           <p className="text-gray-400 mt-2 font-medium">
-            {esPremio ? (
-              <>
-                <span className="line-through text-gray-500 mr-2">${servicio.precio}</span>
-                <span className="text-dorado font-black">${servicio.precio / 2} MXN</span>
-              </>
-            ) : (
-              `$${servicio.precio} MXN`
-            )} 
+              ${servicio.precio} MXN
             {' '}• {servicio.duracionMinutos} min
           </p>
-
-          {esPremio && (
-            <div className="mt-3 bg-dorado text-negro-barber text-[10px] font-black uppercase tracking-widest py-1.5 px-4 rounded-full inline-flex items-center gap-2">
-              <FaGift /> PREMIO 50% OFF APLICADO
-            </div>
-          )}
-
-          {premioNoAplica && (
-            <div className="mt-4 bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs font-bold p-3 rounded-xl leading-relaxed">
-              Tu premio no aplica aquí, solo en <span className="font-black">{serviciosAplicables.map(s => s.nombre).join(', ')}</span>. Queda guardado para después.
-            </div>
-          )}
         </div>
 
         <form onSubmit={manejarEnvio} className="p-8">
@@ -304,7 +259,7 @@ function Reservar() {
           </button>
 
           <div className="text-center mt-6">
-            <Link to="/" onClick={cancelarReserva} className="inline-flex items-center gap-2 text-gray-400 hover:text-red-500 transition font-black text-[10px] tracking-widest uppercase">
+            <Link to="/" className="inline-flex items-center gap-2 text-gray-400 hover:text-red-500 transition font-black text-[10px] tracking-widest uppercase">
               <FaArrowLeft /> CANCELAR
             </Link>
           </div>
