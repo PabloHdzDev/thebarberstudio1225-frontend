@@ -489,7 +489,7 @@ function BarberDashboard() {
             ) : clienteStats ? (
               <>
                 {/* Resumen */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   {[
                     { label: 'Clientes Totales',    value: clienteStats.resumen.totalClientes,          icon: <FaUsers />,     color: 'border-dorado' },
                     { label: 'Nuevos este Mes',      value: clienteStats.resumen.clientesNuevosEsteMes,  icon: <FaUserPlus />,  color: 'border-blue-400' },

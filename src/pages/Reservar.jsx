@@ -36,6 +36,7 @@ function Reservar() {
       }
     };
     cargarServicio();
+    setNotas(new URLSearchParams(window.location.search).get('notas') || '');
   }, [id]);
 
   useEffect(() => {

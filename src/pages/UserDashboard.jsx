@@ -269,7 +269,7 @@ function UserDashboard() {
                   </div>
 
                   <Link
-                    to={`/reservar/${cita.servicio?._id}`}
+                    to={`/reservar/${cita.servicio?._id}?notas=${encodeURIComponent(cita.notas || '')}`}
                     className="mt-5 flex items-center justify-center gap-2 w-full py-3 bg-gray-100 text-gray-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-dorado hover:text-negro-barber transition-all"
                   >
                     <FaScissors /> Repetir corte
