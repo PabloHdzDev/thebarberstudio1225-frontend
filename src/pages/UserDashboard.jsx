@@ -8,8 +8,6 @@ import {
 } from 'react-icons/fa6';
 import { Link } from 'react-router-dom';
 
-const META_VISITAS = 5;
-
 const NIVELES = {
   nuevo:     { label: 'Nuevo',     color: 'bg-gray-200 text-gray-600' },
   regular:   { label: 'Regular',   color: 'bg-blue-100 text-blue-700' },
@@ -59,13 +57,7 @@ function UserDashboard() {
   const citasPasadas  = citas.filter(c => new Date(c.fechaHora) <= ahora);
 
   // Datos de fidelidad desde la BD (no desde conteo local)
-  const contadorVisitas = perfil?.contadorVisitas ?? 0;
-  const premioPendiente = perfil?.premioPendiente ?? false;
-  const totalVisitas    = perfil?.totalVisitas ?? 0;
-  const totalGastado    = perfil?.totalGastado ?? 0;
-  const ultimaVisita    = perfil?.ultimaVisita ? new Date(perfil.ultimaVisita) : null;
   const nivel           = perfil?.nivel ?? 'nuevo';
-  const cortesParaPremio = META_VISITAS - contadorVisitas;
 
   const esEditable = (fechaHoraCita) => {
     const diferencia = (new Date(fechaHoraCita) - ahora) / (1000 * 60 * 60);
@@ -135,19 +127,11 @@ function UserDashboard() {
     }
   };
 
-  const manejarCanjearPremio = () => {
-    // El flag de localStorage es solo para la UI de Reservar.
-    // La validación real ocurre en el backend al crear la cita.
-    localStorage.setItem('canjearPremio', 'true');
-  };
-
   if (cargando) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 font-black text-dorado animate-pulse">
       CARGANDO TU PERFIL...
     </div>
-  );
-
-  const nivelInfo = NIVELES[nivel] || NIVELES.nuevo;
+  )
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
@@ -206,93 +190,6 @@ function UserDashboard() {
             </button>
           </section>
         )}
-
-        {/* ── TARJETA DE LEALTAD ── */}
-        <section className="bg-negro-barber p-6 md:p-8 rounded-3xl shadow-xl border border-dorado/20 relative overflow-hidden">
-          <FaStar className="absolute -right-10 -top-10 text-9xl text-dorado/5" />
-
-          <div className="relative z-10">
-            {/* Encabezado con nombre y nivel */}
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h2 className="text-dorado text-xs font-black tracking-[0.2em] uppercase mb-1">
-                  The Barber Studio 1225
-                </h2>
-                <h3 className="text-white text-xl md:text-2xl font-bold">
-                  {premioPendiente
-                    ? '¡Tu premio está listo!'
-                    : `${cortesParaPremio} ${cortesParaPremio === 1 ? 'visita' : 'visitas'} para tu próximo premio`
-                  }
-                </h3>
-              </div>
-              <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${nivelInfo.color}`}>
-                {nivelInfo.label}
-              </span>
-            </div>
-
-            {/* Sellos de progreso */}
-            <div className="flex gap-2 sm:gap-3 mb-6">
-              {Array.from({ length: META_VISITAS }).map((_, i) => {
-                const numero = i + 1;
-                const completado = numero <= contadorVisitas;
-                const esPremio = numero === META_VISITAS;
-                return (
-                  <div
-                    key={numero}
-                    className={`flex-1 h-10 sm:h-12 rounded-full flex items-center justify-center text-base sm:text-xl font-bold transition-all
-                      ${completado || premioPendiente
-                        ? 'bg-dorado text-negro-barber shadow-lg shadow-dorado/40 scale-105'
-                        : 'bg-gray-800 text-gray-600 border border-gray-700'
-                      }
-                      ${esPremio && !completado && !premioPendiente ? 'border-dorado text-dorado' : ''}
-                    `}
-                  >
-                    {esPremio
-                      ? <FaGift />
-                      : completado
-                        ? <FaCheck />
-                        : numero
-                    }
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Botón de canje */}
-            {premioPendiente && (
-              <div className="mb-4">
-                <Link
-                  to="/"
-                  onClick={manejarCanjearPremio}
-                  className="inline-flex items-center justify-center gap-2 bg-dorado text-negro-barber px-6 py-3 rounded-xl font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all shadow-lg shadow-dorado/20 w-full sm:w-auto"
-                >
-                  <FaGift className="text-lg" /> Agendar con 50% OFF
-                </Link>
-                <p className="text-gray-500 text-[11px] mt-2 leading-relaxed">
-                  Válido en Corte de Cabello o Corte Clásico de Niño. No aplica en
-                  paquetes ni otros servicios.
-                </p>
-              </div>
-            )}
-
-            {/* Stats del cliente */}
-            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/10">
-              <div className="text-center">
-                <p className="text-dorado text-lg md:text-2xl font-black">{totalVisitas}</p>
-                <p className="text-gray-500 text-[9px] uppercase tracking-widest">Visitas totales</p>
-              </div>
-              <div className="text-center border-l border-white/10">
-                <p className="text-dorado text-xs md:text-sm font-black">
-                  {ultimaVisita
-                    ? ultimaVisita.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })
-                    : '—'
-                  }
-                </p>
-                <p className="text-gray-500 text-[9px] uppercase tracking-widest">Última visita</p>
-              </div>
-            </div>
-          </div>
-        </section>
 
         {/* ── PRÓXIMAS CITAS ── */}
         <section>
