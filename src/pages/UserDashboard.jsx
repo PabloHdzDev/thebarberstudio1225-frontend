@@ -220,7 +220,6 @@ function UserDashboard() {
                     <h3 className="text-xl font-black text-negro-barber mb-1 uppercase italic">{cita.servicio?.nombre}</h3>
                     <p className="text-gray-400 text-sm font-bold mb-4">
                       ${cita.servicio?.precio} MXN
-                      {cita.esPremio && <span className="ml-2 text-dorado text-[10px] font-black uppercase">🎁 Premio</span>}
                     </p>
 
                     {cita.notas && (
@@ -266,7 +265,6 @@ function UserDashboard() {
                       )}
                     </div>
                     <h3 className="text-lg font-black text-gray-700 uppercase italic">{cita.servicio?.nombre}</h3>
-                    {cita.esPremio && <p className="text-[10px] text-dorado font-black mt-1">🎁 Canje de premio</p>}
                     {cita.notas && <p className="text-[10px] text-gray-500 italic mt-2 border-l-2 border-gray-200 pl-2">"{cita.notas}"</p>}
                   </div>
 

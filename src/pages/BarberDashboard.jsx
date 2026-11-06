@@ -4,9 +4,9 @@ import {
   FaPlus, FaCamera, FaScissors, FaBoxOpen, FaX, FaTrash,
   FaPenToSquare, FaCircleCheck, FaCircleExclamation, FaCalendarCheck,
   FaWhatsapp, FaCalendarDay, FaBars, FaEyeSlash, FaChartPie, FaClock,
-  FaMoneyBillTrendUp, FaUsers, FaChartColumn, FaGift, FaFire,
-  FaTrophy, FaUserPlus, FaUserClock, FaMagnifyingGlass,
-  FaLock, FaLockOpen, FaArrowRotateLeft, FaChevronLeft, FaChevronRight,
+  FaMoneyBillTrendUp, FaUsers, FaChartColumn, FaFire,
+  FaTrophy, FaUserPlus, FaUserClock,
+  FaLock, FaLockOpen,
   FaAddressBook, FaKey
 } from 'react-icons/fa6';
 import { io } from 'socket.io-client';
@@ -94,7 +94,7 @@ function BarberDashboard() {
     nombre: '', descripcion: '', precio: '', stock: 0, duracionMinutos: 30,
     fechaHora: '', notas: '', activo: true,
     servicio: '', cliente: '', nombreInvitado: '', esInvitado: false,
-    orden: 0, esOferta: false, precioAnterior: '', aplicaPremio: false
+    orden: 0, esOferta: false, precioAnterior: '',
   });
 
   const mostrarNotificacion = (mensaje, tipo = 'exito') => {
@@ -284,7 +284,6 @@ function BarberDashboard() {
         data.append('precioAnterior', form.precioAnterior || 0);
         if (tabActiva === 'servicios') {
           data.append('duracionMinutos', form.duracionMinutos);
-          data.append('aplicaPremio', form.aplicaPremio ? 'true' : 'false');
         }
         if (tabActiva === 'productos') data.append('stock', form.stock);
         if (archivo) data.append('imagen', archivo);
@@ -361,7 +360,7 @@ function BarberDashboard() {
   const cerrarTodo = () => {
     setMostrarForm(false);
     setItemAEditar(null);
-    setForm({ nombre: '', descripcion: '', precio: '', stock: 0, duracionMinutos: 30, fechaHora: '', notas: '', activo: true, servicio: '', cliente: '', nombreInvitado: '', esInvitado: false, orden: 0, esOferta: false, precioAnterior: '', aplicaPremio: false });
+    setForm({ nombre: '', descripcion: '', precio: '', stock: 0, duracionMinutos: 30, fechaHora: '', notas: '', activo: true, servicio: '', cliente: '', nombreInvitado: '', esInvitado: false, orden: 0, esOferta: false, precioAnterior: '' });
     setArchivo(null);
     setMenuMovil(false);
   };
@@ -493,7 +492,6 @@ function BarberDashboard() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[
                     { label: 'Clientes Totales',    value: clienteStats.resumen.totalClientes,          icon: <FaUsers />,     color: 'border-dorado' },
-                    { label: 'Con Premio Pendiente', value: clienteStats.resumen.clientesConPremio,      icon: <FaGift />,      color: 'border-amber-400' },
                     { label: 'Nuevos este Mes',      value: clienteStats.resumen.clientesNuevosEsteMes,  icon: <FaUserPlus />,  color: 'border-blue-400' },
                     { label: 'Inactivos +60 días',   value: clienteStats.resumen.clientesInactivos,      icon: <FaUserClock />, color: 'border-red-400' },
                   ].map(stat => (
@@ -504,28 +502,6 @@ function BarberDashboard() {
                     </div>
                   ))}
                 </div>
-
-                {/* Clientes con Premio */}
-                {clienteStats.clientesConPremio.length > 0 && (
-                  <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-6">
-                    <h3 className="font-black text-negro-barber uppercase tracking-tight text-lg mb-4 flex items-center gap-2">
-                      <FaGift className="text-amber-500" /> Clientes con Premio Disponible
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {clienteStats.clientesConPremio.map(c => (
-                        <div key={c._id} className="bg-white rounded-xl p-4 flex flex-col lg:flex-row gap-2 items-center text-center lg:text-left justify-between shadow-sm overflow-clip">
-                          <div>
-                            <p className="font-black text-negro-barber">{c.nombre}</p>
-                            <p className="text-xs text-gray-400">{c.email}</p>
-                          </div>
-                          <a href={enlaceWhatsApp(c.whatsapp)} target="_blank" rel="noreferrer" className="bg-green-500 text-white px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1 hover:bg-green-600 transition">
-                            <FaWhatsapp /> Contactar
-                          </a>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
                 {/* Clientes Frecuentes */}
                 {clienteStats.clientesFrecuentes.length > 0 && (
@@ -667,7 +643,6 @@ function BarberDashboard() {
                         onChange: (v) => listaClientes.cambiarFiltro('filtro', v),
                         opciones: [
                           { valor: 'todos', texto: 'Todos' },
-                          { valor: 'conPremio', texto: 'Con premio' },
                           { valor: 'inactivos', texto: 'Inactivos' },
                           { valor: 'nuevos', texto: 'Nuevos' },
                           { valor: 'bloqueados', texto: 'Bloqueados' },
@@ -716,7 +691,7 @@ function BarberDashboard() {
                               <tr key={c._id} className="border-b border-gray-50 hover:bg-gray-50 transition">
                                 <td className="py-3 px-2">
                                   <div className="flex items-center gap-2">
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black flex-shrink-0 ${c.activo === false ? 'bg-red-100 text-red-400' : 'bg-dorado/20 text-dorado'}`}>
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${c.activo === false ? 'bg-red-100 text-red-400' : 'bg-dorado/20 text-dorado'}`}>
                                       {c.nombre.charAt(0).toUpperCase()}
                                     </div>
                                     <div>
@@ -789,7 +764,7 @@ function BarberDashboard() {
           <div className="fixed inset-0 bg-negro-barber/80 backdrop-blur-sm z-100 flex items-center justify-center p-4" onClick={cerrarCliente}>
             <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
               <div className="bg-negro-barber p-6 flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-dorado/20 flex items-center justify-center text-2xl font-black text-dorado flex-shrink-0">
+                <div className="w-14 h-14 rounded-2xl bg-dorado/20 flex items-center justify-center text-2xl font-black text-dorado shrink-0">
                   {clienteSeleccionado.nombre.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -799,7 +774,7 @@ function BarberDashboard() {
                     <span className="text-[10px] font-black text-red-400 bg-red-900/30 px-2 py-0.5 rounded-full mt-1 inline-block">Cuenta bloqueada</span>
                   )}
                 </div>
-                <button onClick={cerrarCliente} className="text-gray-400 hover:text-white text-xl flex-shrink-0">
+                <button onClick={cerrarCliente} className="text-gray-400 hover:text-white text-xl shrink-0">
                   <FaX />
                 </button>
               </div>
@@ -823,20 +798,6 @@ function BarberDashboard() {
                   </div>
                 </div>
 
-                {/* Progreso lealtad */}
-                <div className="bg-dorado/5 border border-dorado/20 rounded-xl p-4">
-                  <div className="flex justify-between text-xs font-bold mb-2">
-                    <span className="text-gray-600">Progreso lealtad</span>
-                    <span className="text-dorado">{clienteSeleccionado.contadorVisitas}/5 visitas</span>
-                  </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-dorado rounded-full transition-all" style={{ width: `${Math.min((clienteSeleccionado.contadorVisitas / 5) * 100, 100)}%` }} />
-                  </div>
-                  {clienteSeleccionado.premioPendiente && (
-                    <p className="text-[11px] text-dorado font-black mt-2 flex items-center gap-1"><FaGift /> Premio disponible para canjear</p>
-                  )}
-                </div>
-
                 {/* Última visita */}
                 <p className="text-xs text-gray-400 text-center">
                   Última visita: {clienteSeleccionado.ultimaVisita
@@ -849,13 +810,6 @@ function BarberDashboard() {
                     className="flex items-center justify-center gap-2 w-full py-3 bg-green-500 text-white rounded-xl font-bold text-sm hover:bg-green-600 transition">
                     <FaWhatsapp /> Contactar por WhatsApp
                   </a>
-
-                  <button
-                    onClick={() => ejecutarAccion(clienteSeleccionado._id, 'resetear_contador')}
-                    className="flex items-center justify-center gap-2 w-full py-3 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl font-bold text-sm hover:bg-amber-100 transition"
-                  >
-                    <FaArrowRotateLeft /> Resetear contador de lealtad
-                  </button>
 
                   {/* Contraseña temporal: se muestra una sola vez tras generarla */}
                   {passwordTemporal ? (
@@ -1190,7 +1144,6 @@ function BarberDashboard() {
                     <h3 className="text-xl font-black text-negro-barber">
                       {cita.cliente ? cita.cliente.nombre : cita.esExterno ? cita.nombreInvitado : `${cita.nombreInvitado} (Walk-in)`}
                     </h3>
-                    {cita.esPremio && <span className="text-[10px] bg-dorado/20 text-dorado font-black px-2 py-0.5 rounded-full">🎁 Premio</span>}
                   </div>
 
                   <p className={`font-bold mb-1 ${cita.esExterno ? 'text-blue-500' : 'text-gray-500'}`}>
@@ -1342,25 +1295,6 @@ function BarberDashboard() {
                           <input type="number" value={form.precioAnterior} onChange={(e) => setForm({ ...form, precioAnterior: e.target.value })} className="w-full mt-1 p-3 pl-8 bg-white border border-red-200 rounded-xl focus:border-red-500 focus:ring-1 focus:ring-red-500 font-bold text-red-500 line-through outline-none transition-all" placeholder="Ej. 350" />
                         </div>
                       </div>
-
-                      {tabActiva === 'servicios' && (
-                        <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border-2 border-dashed border-gray-200 hover:border-dorado transition-colors">
-                          <input
-                            type="checkbox"
-                            checked={form.aplicaPremio}
-                            onChange={(e) => setForm({ ...form, aplicaPremio: e.target.checked })}
-                            className="w-5 h-5 accent-amber-500 rounded cursor-pointer mt-0.5 shrink-0"
-                          />
-                          <span>
-                            <span className="text-xs font-black uppercase text-amber-600 tracking-widest block">
-                              🎁 Válido para el premio de lealtad
-                            </span>
-                            <span className="text-[11px] text-gray-400 font-medium">
-                              Los clientes podrán canjear aquí su 50% de descuento tras 5 visitas
-                            </span>
-                          </span>
-                        </label>
-                      )}
                     </div>
                     <div>
                       <label className="text-[10px] md:text-xs font-black uppercase text-gray-400 tracking-widest">Descripción</label>

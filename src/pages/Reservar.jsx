@@ -10,7 +10,6 @@ function Reservar() {
   const navigate = useNavigate();
   
   const [servicio, setServicio] = useState(null);
-  const [serviciosAplicables, setServiciosAplicables] = useState([]);
   const [fecha, setFecha] = useState('');
   const [hora, setHora] = useState('');
   const [notas, setNotas] = useState('');
@@ -177,8 +176,7 @@ function Reservar() {
           <h1 className="text-white text-3xl font-bold">{servicio.nombre}</h1>
           
           <p className="text-gray-400 mt-2 font-medium">
-              ${servicio.precio} MXN
-            {' '}• {servicio.duracionMinutos} min
+              ${servicio.precio} MXN{' '}• {servicio.duracionMinutos} min
           </p>
         </div>
 

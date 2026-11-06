@@ -95,7 +95,6 @@ function FichaCita({ cita, ancla, esMovil, onCerrar, onReprogramar, onEliminar }
             <div className="flex-1 min-w-0">
               <p className="font-black text-negro-barber truncate flex items-center gap-2">
                 {nombreDeCita(cita)}
-                {cita.esPremio && <FaGift className="text-dorado text-sm shrink-0" title="Cita con premio" />}
               </p>
               <span className={`inline-block mt-1 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full ${estilo.fondo} ${estilo.texto}`}>
                 {estilo.etiqueta}
@@ -112,7 +111,7 @@ function FichaCita({ cita, ancla, esMovil, onCerrar, onReprogramar, onEliminar }
               <dd className="font-bold text-negro-barber">
                 {cita.servicio?.nombre || 'Servicio'}
                 {cita.servicio?.precio != null && (
-                  <span className="text-gray-400 font-medium"> · ${cita.esPremio ? Math.round(cita.servicio.precio / 2) : cita.servicio.precio}</span>
+                  <span className="text-gray-400 font-medium"> · ${cita.servicio.precio}</span>
                 )}
               </dd>
             </div>
@@ -522,7 +521,6 @@ function CalendarioAgenda({ horarios, version = 0, onNuevaCita, onReprogramar, o
                         aria-label={`${nombreDeCita(cita)}, ${cita.servicio?.nombre || ''}, ${formatoHora12(cita.fechaHora)}`}
                       >
                         <p className={`text-[11px] font-black leading-tight truncate ${estilo.texto} ${cita.estado === 'cancelada' ? 'line-through' : ''}`}>
-                          {cita.esPremio && <FaGift className="inline text-dorado mr-1 -mt-0.5" aria-hidden="true" />}
                           {nombreDeCita(cita)}
                           {compacta && <span className="font-medium opacity-70"> · {formatoHora12(cita.fechaHora)}</span>}
                         </p>

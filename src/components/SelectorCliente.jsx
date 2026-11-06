@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { FaMagnifyingGlass, FaCheck, FaUser, FaGift } from 'react-icons/fa6';
+import { FaMagnifyingGlass, FaCheck, FaUser } from 'react-icons/fa6';
 
 const NIVELES = {
   nuevo:     { label: 'Nuevo',     color: 'bg-gray-100 text-gray-500' },
@@ -47,9 +47,6 @@ function SelectorCliente({ usuarios, valor, onSeleccionar }) {
           <div className="flex-1 min-w-0">
             <p className="font-black text-negro-barber flex items-center gap-2">
               <span className="line-clamp-2 wrap-break-word min-w-0">{elegido.nombre}</span>
-              {elegido.premioPendiente && (
-                <FaGift className="text-dorado text-xs shrink-0" title="Tiene premio disponible" />
-              )}
             </p>
             <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-gray-500">
               <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${nivel.color}`}>
@@ -115,7 +112,6 @@ function SelectorCliente({ usuarios, valor, onSeleccionar }) {
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-negro-barber text-sm leading-snug flex items-center gap-1.5">
                     <span className="line-clamp-2 wrap-break-word min-w-0">{u.nombre}</span>
-                    {u.premioPendiente && <FaGift className="text-dorado text-[10px] shrink-0" />}
                   </p>
                   <p className="text-[11px] text-gray-400 truncate">{u.whatsapp}</p>
                 </div>
