@@ -302,6 +302,10 @@ function Home() {
                       </p>
                     </div>
 
+                    <div className="flex flex-col items-center justify-center mb-4">
+                      <p className="text-sm text-gray-600 leading-relaxed">{prod.descripcion}</p>
+                    </div>
+
                     <a
                       href={`https://wa.me/5213318688146?text=Hola! Me interesa comprar el producto: ${prod.nombre}`}
                       target="_blank"
