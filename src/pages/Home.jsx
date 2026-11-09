@@ -205,7 +205,7 @@ function Home() {
                   <div className="px-8 py-5 bg-beige-claro flex justify-between items-center mt-auto border-t border-beige/20">
                     <div className="flex flex-col">
                       {s.esOferta && s.precioAnterior > 0 && (
-                        <span className="text-xs text-gray-400 font-bold line-through mb-[-4px]">
+                        <span className="text-xs text-gray-400 font-bold line-through -mb-1">
                           ${s.precioAnterior}
                         </span>
                       )}
@@ -293,7 +293,7 @@ function Home() {
                     
                     <div className="flex flex-col items-center justify-center mb-4">
                       {prod.esOferta && prod.precioAnterior > 0 && (
-                        <span className="text-xs text-gray-400 font-bold line-through mb-[-4px]">
+                        <span className="text-xs text-gray-400 font-bold line-through -mb-1">
                           ${prod.precioAnterior}
                         </span>
                       )}
