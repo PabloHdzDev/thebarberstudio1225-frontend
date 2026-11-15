@@ -110,7 +110,7 @@ function Home() {
         </div>
       )}
 
-      <div className="bg-marron text-white py-3 px-4 text-center sticky top-0 z-50 shadow-md gap-3">
+      <div className="bg-marron text-white py-5 px-4 text-center sticky top-0 z-50 shadow-md gap-3">
         <div className="flex items-center justify-center gap-2 sm:gap-3">
           <span className="animate-bounce text-xl">📢</span>
 
