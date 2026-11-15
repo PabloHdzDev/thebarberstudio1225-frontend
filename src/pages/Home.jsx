@@ -110,7 +110,7 @@ function Home() {
         </div>
       )}
 
-      {/* <div className="bg-marron text-white py-3 px-4 text-center sticky top-0 z-50 shadow-md gap-3">
+      <div className="bg-marron text-white py-3 px-4 text-center sticky top-0 z-50 shadow-md gap-3">
         <div className="flex items-center justify-center gap-2 sm:gap-3">
           <span className="animate-bounce text-xl">📢</span>
 
@@ -122,7 +122,7 @@ function Home() {
 
           <span className="animate-bounce text-xl">✂️</span>
         </div>
-      </div> */}
+      </div>
       
       {/* 1. HERO SECTION */}
       <section className="min-h-screen flex flex-col justify-center items-center text-center px-4 bg-beige text-negro-barber">
