@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
 import { Link } from 'react-router-dom';
-import { FaWhatsapp, FaFacebook, FaPhone, FaNewspaper, FaBookOpen, FaChevronDown } from 'react-icons/fa6';
+import { FaWhatsapp, FaBookOpen, FaChevronDown } from 'react-icons/fa6';
 import { ARTICULOS_BLOG } from '../articles'; 
 import Footer from '../components/Footer';
 import MapaDiferido from '../components/MapaDiferido';
@@ -99,22 +99,12 @@ function Home() {
   return (
     <div className="font-sans text-negro-barber">
       
-      {/* BANNER DE OFERTAS */}
-      {hayOfertasActivas && (
-        <div className="bg-rojo-oferta text-white py-3 px-4 text-center sticky top-0 z-50 shadow-lg flex items-center justify-center gap-3">
-          <span className="animate-bounce text-xl">🔥</span>
-          <p className="text-[10px] sm:text-sm font-black uppercase tracking-widest">
-            ¡Aprovecha nuestras promociones exclusivas por tiempo limitado!
-          </p>
-          <span className="animate-bounce text-xl">🔥</span>
-        </div>
-      )}
-
+      
       <div className="bg-marron text-white py-5 px-4 text-center sticky top-0 z-50 shadow-md gap-3">
         <div className="flex items-center justify-center gap-2 sm:gap-3">
           <span className="animate-bounce text-xl">📢</span>
 
-          <p className="text-[10px] sm:text-sm font-black uppercase tracking-widest leading-relaxed">
+          <p className="text-[12px] md:text-sm font-black uppercase tracking-widest leading-relaxed">
             ¡Aviso importante! A partir del
             <span className="text-amber-200 font-black"> 1 de diciembre </span>
             tendremos nuevos precios en nuestros servicios.
@@ -123,6 +113,28 @@ function Home() {
           <span className="animate-bounce text-xl">✂️</span>
         </div>
       </div>
+      
+      {/* BANNER DE OFERTAS */}
+      {hayOfertasActivas && (
+        <div className="sticky top-0 z-40 bg-marron px-4 py-2.5 text-center text-white shadow-md sm:py-3">
+          <p className="mx-auto max-w-5xl text-pretty text-[10px] font-semibold leading-snug tracking-wide md:text-sm">
+            Consulta los servicios que tendrán nuevos precios y aprovecha las tarifas actuales hasta el{" "}
+            <span className="font-black text-amber-200">30 de noviembre</span>.
+          </p>
+        </div>
+      )}
+
+      {/* BANNER DE OFERTAS */}
+      {/* {hayOfertasActivas && (
+        <div className="bg-rojo-oferta text-white py-3 px-4 text-center sticky top-0 z-50 shadow-lg flex items-center justify-center gap-3">
+          <span className="animate-bounce text-xl">🔥</span>
+          <p className="text-[10px] sm:text-sm font-black uppercase tracking-widest">
+            ¡Aprovecha nuestras promociones exclusivas por tiempo limitado!
+          </p>
+          <span className="animate-bounce text-xl">🔥</span>
+        </div>
+      )} */}
+
       
       {/* 1. HERO SECTION */}
       <section className="min-h-screen flex flex-col justify-center items-center text-center px-4 bg-beige text-negro-barber">
@@ -184,9 +196,15 @@ function Home() {
               {serviciosMostrados.map((s) => (
                 <div key={s._id} className="group relative rounded-2xl overflow-hidden border border-arena bg-beige shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col">
                   
-                  {s.esOferta && (
+                  {/* {s.esOferta && (
                     <div className="absolute top-4 right-4 bg-rojo-oferta text-white text-[10px] sm:text-xs font-black px-4 py-2 rounded-full uppercase tracking-widest z-20 shadow-lg shadow-rojo-oferta/40 animate-pulse border-2 border-rojo-oferta">
                       🔥 Oferta Especial
+                    </div>
+                  )} */}
+                  {s.esOferta && (
+                    <div className="absolute top-4 right-4 z-20 inline-flex items-center gap-1.5 rounded-full border border-amber-300/60 bg-amber-50/95 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-900 shadow-sm backdrop-blur sm:text-xs">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true" />
+                      Próximo aumento
                     </div>
                   )}
 
@@ -202,21 +220,37 @@ function Home() {
                     <h3 className="text-2xl font-bold mb-3 text-marron-oscuro group-hover:text-marron transition">{s.nombre}</h3>
                     <p className="text-negro-barber group-hover:text-negro-suave leading-relaxed">{s.descripcion}</p>
                   </div>
+                  {/* PRECIO NUEVO */}
+                  {s.esOferta && (
+                    <p className="text-sm text-amber-900 font-semibold pl-8">
+                      Precio vigente hasta el 30 de noviembre
+                    </p>
+                  )}
                   <div className="px-8 py-5 bg-beige-claro flex justify-between items-center mt-auto border-t border-beige/20">
                     <div className="flex flex-col">
-                      {s.esOferta && s.precioAnterior > 0 && (
+                      {/* {s.esOferta && s.precioAnterior > 0 && (
                         <span className="text-xs text-gray-400 font-bold line-through -mb-1">
                           ${s.precioAnterior}
                         </span>
                       )}
                       <span className={`text-2xl font-black group-hover:text-marron ${s.esOferta ? 'text-rojo-oferta' : 'text-marron-oscuro'}`}>
                         ${s.precio}
+                      </span> */}
+                      <span className={`text-2xl font-black group-hover:text-marron ${s.esOferta ? 'text-amber-900' : 'text-marron-oscuro'}`}>
+                        ${s.precio}
                       </span>
                     </div>
 
-                    <Link to={`/reservar/${s._id}`} aria-label={`Reservar ${s.nombre}`} className={`px-5 py-2 rounded-lg font-semibold border hover:scale-105 transition-all ${
+                    {/* <Link to={`/reservar/${s._id}`} aria-label={`Reservar ${s.nombre}`} className={`px-5 py-2 rounded-lg font-semibold border hover:scale-105 transition-all ${
                       s.esOferta 
                       ? 'border-rojo-oferta bg-rojo-oferta text-white shadow-lg shadow-rojo-oferta/30' 
+                      : 'border-marron bg-beige text-marron hover:text-beige hover:bg-marron'
+                    }`}>
+                      Reservar
+                    </Link> */}
+                    <Link to={`/reservar/${s._id}`} aria-label={`Reservar ${s.nombre}`} className={`px-5 py-2 rounded-lg font-semibold border hover:scale-105 transition-all ${
+                      s.esOferta 
+                      ? 'border-amber-900 bg-amber-900 text-white shadow-lg shadow-amber-900/30' 
                       : 'border-marron bg-beige text-marron hover:text-beige hover:bg-marron'
                     }`}>
                       Reservar
