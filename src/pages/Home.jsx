@@ -180,6 +180,9 @@ function Home() {
               </h2>
               <span className="flex-1 h-1 bg-negro-suave max-w-80px md:max-w-120px"></span>
             </div>
+            <p className="text-gray-600 font-medium">
+              Descubre nuestros servicios de barbería, cuidado facial, depilación y cuidado personal.
+            </p>
           </div>
           
           {cargando ? (
