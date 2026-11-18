@@ -402,7 +402,7 @@ function BarberDashboard() {
   const itemsMostrados = buscarItems.trim()
     ? items.filter(i =>
         (i.nombre || '').toLowerCase().includes(buscarItems.toLowerCase()) ||
-        (i.descripcion || '').toLowerCase().includes(buscarItems.toLowerCase()))
+        (i.descripcion || '').toLowerCase().includes(buscarItems.toLowerCase())).sort((a, b) => a.orden - b.orden)
     : items;
 
   const cambiarFiltroCitas = (nuevo) => {
