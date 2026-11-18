@@ -48,7 +48,7 @@ const agruparHorarios = (horarios) => {
 };
 
 // Cuántos servicios se ven antes de pedir "ver todos"
-const SERVICIOS_VISIBLES = 6;
+// const SERVICIOS_VISIBLES = window.innerWidth < 1024 ? 8 : 9;
 
 function Home() {
   const [servicios, setServicios] = useState([]);
@@ -56,6 +56,16 @@ function Home() {
   const [horarios, setHorarios] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [verTodosServicios, setVerTodosServicios] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+    window.addEventListener('resize', handleResize);
+  }, []);
+
+  const SERVICIOS_VISIBLES = windowWidth < 1024 ? 8 : 9;
 
   useEffect(() => {
     const cargarDatos = async () => {
