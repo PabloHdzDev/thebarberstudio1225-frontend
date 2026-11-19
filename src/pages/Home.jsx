@@ -201,7 +201,7 @@ function Home() {
       {/* 2. SECCIÓN DE SERVICIOS */}
       <section id="servicios" className="py-20 bg-gray-50 px-4">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16 mx-2 sm:mx-10 md:mx-20">
+          <div className="text-center mb-10 mx-2 sm:mx-10 md:mx-20">
             <div className="flex items-center justify-center gap-4">
               <span className="flex-1 h-1 bg-negro-suave max-w-80px md:max-w-120px"></span>
               <h2 className="text-xl md:text-4xl font-extrabold text-negro-barber uppercase tracking-tight whitespace-nowrap">
