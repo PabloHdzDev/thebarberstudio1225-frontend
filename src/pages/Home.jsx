@@ -6,6 +6,8 @@ import { ARTICULOS_BLOG } from '../articles';
 import Footer from '../components/Footer';
 import MapaDiferido from '../components/MapaDiferido';
 import { optimizar } from '../utils/imagen';
+import PestanasCategoria from '../components/PestanasCategoria';
+import { categoriasDe, tieneCambioProgramado, fechaLarga, ultimoDiaAntes } from '../utils/catalogo';
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 // La semana se muestra empezando en lunes, no en domingo
@@ -57,6 +59,9 @@ function Home() {
   const [cargando, setCargando] = useState(true);
   const [verTodosServicios, setVerTodosServicios] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  // Pestaña elegida; vacío es "Todos"
+  const [categoriaServicio, setCategoriaServicio] = useState('');
+  const [categoriaProducto, setCategoriaProducto] = useState('');
 
   useEffect(() => {
     const handleResize = () => {
@@ -89,10 +94,25 @@ function Home() {
 
   const horarioAgrupado = agruparHorarios(horarios);
 
+  const categoriasServicios = categoriasDe(servicios);
+  const categoriasProductos = categoriasDe(productos);
+  const serviciosFiltrados = categoriaServicio
+    ? servicios.filter(s => s.categoria === categoriaServicio)
+    : servicios;
+  const productosFiltrados = categoriaProducto
+    ? productos.filter(p => p.categoria === categoriaProducto)
+    : productos;
+
   const serviciosMostrados = verTodosServicios
-    ? servicios
-    : servicios.slice(0, SERVICIOS_VISIBLES);
-  const serviciosOcultos = servicios.length - SERVICIOS_VISIBLES;
+    ? serviciosFiltrados
+    : serviciosFiltrados.slice(0, SERVICIOS_VISIBLES);
+  const serviciosOcultos = serviciosFiltrados.length - SERVICIOS_VISIBLES;
+
+  // El cambio de precio más próximo: de ahí salen las fechas de los avisos
+  const proximoCambio = servicios
+    .filter(tieneCambioProgramado)
+    .map(s => new Date(s.precioNuevoDesde))
+    .sort((a, b) => a - b)[0];
 
   const alternarServicios = () => {
     // Al plegar, se regresa al inicio de la sección para no dejar al usuario
@@ -103,35 +123,34 @@ function Home() {
     setVerTodosServicios(!verTodosServicios);
   };
 
-  const hayOfertasActivas = servicios.some(s => s.esOferta && s.activo) || 
-                            productos.some(p => p.esOferta && p.activo);
-
   return (
     <div className="font-sans text-negro-barber">
-      
-      
-      <div className="bg-marron text-white py-5 px-4 text-center sticky top-0 z-50 shadow-md gap-3">
-        <div className="flex items-center justify-center gap-2 sm:gap-3">
-          <span className="animate-bounce text-xl">📢</span>
 
-          <p className="text-[12px] md:text-sm font-black uppercase tracking-widest leading-relaxed">
-            ¡Aviso importante! A partir del
-            <span className="text-amber-200 font-black"> 1 de diciembre </span>
-            tendremos nuevos precios en nuestros servicios.
-          </p>
+      {/* AVISOS DE CAMBIO DE PRECIO: salen de los cambios programados en el
+          panel y desaparecen solos cuando el cambio entra */}
+      {proximoCambio && (
+        <>
+          <div className="bg-marron text-white py-5 px-4 text-center sticky top-0 z-50 shadow-md gap-3">
+            <div className="flex items-center justify-center gap-2 sm:gap-3">
+              <span className="animate-bounce text-xl">📢</span>
 
-          <span className="animate-bounce text-xl">✂️</span>
-        </div>
-      </div>
-      
-      {/* BANNER DE OFERTAS */}
-      {hayOfertasActivas && (
-        <div className="sticky top-0 z-40 bg-marron px-4 py-2.5 text-center text-white shadow-md sm:py-3">
-          <p className="mx-auto max-w-5xl text-pretty text-[10px] font-semibold leading-snug tracking-wide md:text-sm">
-            Consulta los servicios que tendrán nuevos precios y aprovecha las tarifas actuales hasta el{" "}
-            <span className="font-black text-amber-200">30 de noviembre</span>.
-          </p>
-        </div>
+              <p className="text-[12px] md:text-sm font-black uppercase tracking-widest leading-relaxed">
+                ¡Aviso importante! A partir del
+                <span className="text-amber-200 font-black"> {fechaLarga(proximoCambio)} </span>
+                tendremos nuevos precios en nuestros servicios.
+              </p>
+
+              <span className="animate-bounce text-xl">✂️</span>
+            </div>
+          </div>
+
+          <div className="sticky top-0 z-40 bg-marron px-4 py-2.5 text-center text-white shadow-md sm:py-3">
+            <p className="mx-auto max-w-5xl text-pretty text-[10px] font-semibold leading-snug tracking-wide md:text-sm">
+              Consulta los servicios que tendrán nuevos precios y aprovecha las tarifas actuales hasta el{" "}
+              <span className="font-black text-amber-200">{ultimoDiaAntes(proximoCambio)}</span>.
+            </p>
+          </div>
+        </>
       )}
 
       {/* BANNER DE OFERTAS */}
@@ -205,19 +224,29 @@ function Home() {
               <p className="text-gray-400 font-medium text-lg">Por el momento no hay servicios disponibles.</p>
             </div>
           ) : (
+            <>
+            <PestanasCategoria
+              categorias={categoriasServicios}
+              activa={categoriaServicio}
+              onCambiar={setCategoriaServicio}
+              etiqueta="Categorías de servicios"
+            />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-              {serviciosMostrados.map((s) => (
+              {serviciosMostrados.map((s) => {
+                const programado = tieneCambioProgramado(s);
+                const oferta = !programado && s.esOferta;
+                return (
                 <div key={s._id} className="group relative rounded-2xl overflow-hidden border border-arena bg-beige shadow-sm hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col">
-                  
-                  {/* {s.esOferta && (
-                    <div className="absolute top-4 right-4 bg-rojo-oferta text-white text-[10px] sm:text-xs font-black px-4 py-2 rounded-full uppercase tracking-widest z-20 shadow-lg shadow-rojo-oferta/40 animate-pulse border-2 border-rojo-oferta">
-                      🔥 Oferta Especial
-                    </div>
-                  )} */}
-                  {s.esOferta && (
+
+                  {programado && (
                     <div className="absolute top-4 right-4 z-20 inline-flex items-center gap-1.5 rounded-full border border-amber-300/60 bg-amber-50/95 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-900 shadow-sm backdrop-blur sm:text-xs">
                       <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true" />
-                      Próximo aumento
+                      {s.precioNuevo > s.precio ? 'Próximo aumento' : 'Cambio de precio'}
+                    </div>
+                  )}
+                  {oferta && (
+                    <div className="absolute top-4 right-4 bg-rojo-oferta text-white text-[10px] sm:text-xs font-black px-4 py-2 rounded-full uppercase tracking-widest z-20 shadow-lg shadow-rojo-oferta/40 animate-pulse border-2 border-rojo-oferta">
+                      🔥 Oferta Especial
                     </div>
                   )}
 
@@ -233,45 +262,41 @@ function Home() {
                     <h3 className="text-2xl font-bold mb-3 text-marron-oscuro group-hover:text-marron transition">{s.nombre}</h3>
                     <p className="text-negro-barber group-hover:text-negro-suave leading-relaxed">{s.descripcion}</p>
                   </div>
-                  {/* PRECIO NUEVO */}
-                  {s.esOferta && (
+                  {/* PRECIO QUE CAMBIA PRONTO */}
+                  {programado && (
                     <p className="text-sm text-amber-900 font-semibold pl-8">
-                      Precio vigente hasta el 30 de noviembre
+                      Precio vigente hasta el {ultimoDiaAntes(s.precioNuevoDesde)}
                     </p>
                   )}
                   <div className="px-8 py-5 bg-beige-claro flex justify-between items-center mt-auto border-t border-beige/20">
                     <div className="flex flex-col">
-                      {/* {s.esOferta && s.precioAnterior > 0 && (
+                      {oferta && s.precioAnterior > 0 && (
                         <span className="text-xs text-gray-400 font-bold line-through -mb-1">
                           ${s.precioAnterior}
                         </span>
                       )}
-                      <span className={`text-2xl font-black group-hover:text-marron ${s.esOferta ? 'text-rojo-oferta' : 'text-marron-oscuro'}`}>
-                        ${s.precio}
-                      </span> */}
-                      <span className={`text-2xl font-black group-hover:text-marron ${s.esOferta ? 'text-amber-900' : 'text-marron-oscuro'}`}>
+                      <span className={`text-2xl font-black group-hover:text-marron ${
+                        programado ? 'text-amber-900' : oferta ? 'text-rojo-oferta' : 'text-marron-oscuro'
+                      }`}>
                         ${s.precio}
                       </span>
                     </div>
 
-                    {/* <Link to={`/reservar/${s._id}`} aria-label={`Reservar ${s.nombre}`} className={`px-5 py-2 rounded-lg font-semibold border hover:scale-105 transition-all ${
-                      s.esOferta 
-                      ? 'border-rojo-oferta bg-rojo-oferta text-white shadow-lg shadow-rojo-oferta/30' 
-                      : 'border-marron bg-beige text-marron hover:text-beige hover:bg-marron'
-                    }`}>
-                      Reservar
-                    </Link> */}
                     <Link to={`/reservar/${s._id}`} aria-label={`Reservar ${s.nombre}`} className={`px-5 py-2 rounded-lg font-semibold border hover:scale-105 transition-all ${
-                      s.esOferta 
-                      ? 'border-amber-900 bg-amber-900 text-white shadow-lg shadow-amber-900/30' 
-                      : 'border-marron bg-beige text-marron hover:text-beige hover:bg-marron'
+                      programado
+                        ? 'border-amber-900 bg-amber-900 text-white shadow-lg shadow-amber-900/30'
+                        : oferta
+                          ? 'border-rojo-oferta bg-rojo-oferta text-white shadow-lg shadow-rojo-oferta/30'
+                          : 'border-marron bg-beige text-marron hover:text-beige hover:bg-marron'
                     }`}>
                       Reservar
                     </Link>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
+            </>
           )}
 
           {!cargando && serviciosOcultos > 0 && (
@@ -315,8 +340,15 @@ function Home() {
               <p className="text-gray-400 font-medium text-lg">Por el momento no hay productos disponibles.</p>
             </div>
           ) : (
+            <>
+            <PestanasCategoria
+              categorias={categoriasProductos}
+              activa={categoriaProducto}
+              onCambiar={setCategoriaProducto}
+              etiqueta="Categorías de productos"
+            />
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-              {productos.map((prod) => (
+              {productosFiltrados.map((prod) => (
                 <div key={prod._id} className="group relative text-center p-4 border border-arena rounded-3xl bg-beige shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-500 overflow-hidden">
                   
                   {prod.esOferta && (
@@ -373,6 +405,7 @@ function Home() {
                 </div>
               ))}
             </div>
+            </>
           )}
         </div>
       </section>

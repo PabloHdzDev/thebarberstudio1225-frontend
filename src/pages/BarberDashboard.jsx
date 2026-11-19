@@ -17,6 +17,8 @@ import { DURACIONES, etiquetaDuracion, formatoHora12 } from '../utils/tiempo';
 import { enlaceWhatsApp, tieneWhatsApp } from '../utils/whatsapp';
 import CalendarioAgenda from '../components/calendario/CalendarioAgenda';
 import PanelCita from '../components/calendario/PanelCita';
+import PanelPrecios from '../components/PanelPrecios';
+import { categoriasDe, tieneCambioProgramado, fechaLarga } from '../utils/catalogo';
 
 const DIAS_SEMANA = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
@@ -94,8 +96,10 @@ function BarberDashboard() {
     nombre: '', descripcion: '', precio: '', stock: 0, duracionMinutos: 30,
     fechaHora: '', notas: '', activo: true,
     servicio: '', cliente: '', nombreInvitado: '', esInvitado: false,
-    orden: 0, esOferta: false, precioAnterior: '',
+    orden: '', categoria: '', esOferta: false, precioAnterior: '',
   });
+  // Tabla para cambiar o programar los precios de varios servicios a la vez
+  const [mostrarPrecios, setMostrarPrecios] = useState(false);
 
   const mostrarNotificacion = (mensaje, tipo = 'exito') => {
     setAlerta({ mostrar: true, mensaje, tipo });
@@ -280,6 +284,7 @@ function BarberDashboard() {
         data.append('descripcion', form.descripcion);
         data.append('activo', form.activo);
         data.append('orden', form.orden);
+        data.append('categoria', form.categoria || '');
         data.append('esOferta', form.esOferta);
         data.append('precioAnterior', form.precioAnterior || 0);
         if (tabActiva === 'servicios') {
@@ -360,7 +365,7 @@ function BarberDashboard() {
   const cerrarTodo = () => {
     setMostrarForm(false);
     setItemAEditar(null);
-    setForm({ nombre: '', descripcion: '', precio: '', stock: 0, duracionMinutos: 30, fechaHora: '', notas: '', activo: true, servicio: '', cliente: '', nombreInvitado: '', esInvitado: false, orden: 0, esOferta: false, precioAnterior: '' });
+    setForm({ nombre: '', descripcion: '', precio: '', stock: 0, duracionMinutos: 30, fechaHora: '', notas: '', activo: true, servicio: '', cliente: '', nombreInvitado: '', esInvitado: false, orden: '', categoria: '', esOferta: false, precioAnterior: '' });
     setArchivo(null);
     setMenuMovil(false);
   };
@@ -468,12 +473,22 @@ function BarberDashboard() {
           </h1>
 
           {tabActiva !== 'estadisticas' && tabActiva !== 'clientes' && tabActiva !== 'horarios' && (
-            <button
-              onClick={tabActiva === 'citas' ? () => abrirModalNuevaCita() : () => setMostrarForm(true)}
-              className="w-full sm:w-auto bg-negro-barber text-dorado px-6 py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-xl"
-            >
-              <FaPlus /> NUEVO {tabActiva === 'citas' ? 'TURNO' : tabActiva === 'servicios' ? 'SERVICIO' : 'PRODUCTO'}
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              {tabActiva === 'servicios' && (
+                <button
+                  onClick={() => setMostrarPrecios(true)}
+                  className="w-full sm:w-auto bg-white text-negro-barber border-2 border-negro-barber px-6 py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:border-dorado hover:text-dorado transition-all"
+                >
+                  <FaMoneyBillTrendUp /> CAMBIAR PRECIOS
+                </button>
+              )}
+              <button
+                onClick={tabActiva === 'citas' ? () => abrirModalNuevaCita() : () => setMostrarForm(true)}
+                className="w-full sm:w-auto bg-negro-barber text-dorado px-6 py-4 rounded-2xl font-black flex items-center justify-center gap-2 hover:scale-105 transition-all shadow-xl"
+              >
+                <FaPlus /> NUEVO {tabActiva === 'citas' ? 'TURNO' : tabActiva === 'servicios' ? 'SERVICIO' : 'PRODUCTO'}
+              </button>
+            </div>
           )}
         </header>
 
@@ -1196,14 +1211,25 @@ function BarberDashboard() {
                   )}
                   <img src={item.imagen || 'https://via.placeholder.com/400'} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={item.nombre} />
                   <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur px-4 py-1 rounded-full font-black text-negro-barber shadow-lg">${item.precio}</div>
+                  <div className="absolute top-4 right-4 bg-negro-barber/85 text-dorado px-3 py-1 rounded-full text-[11px] font-black shadow-lg" title="Posición en la lista">
+                    #{item.orden}
+                  </div>
                 </div>
                 <div className="p-6">
+                  {item.categoria && (
+                    <p className="text-[10px] font-black uppercase tracking-widest text-dorado mb-1">{item.categoria}</p>
+                  )}
                   <h3 className="text-xl font-bold mb-1">{item.nombre}</h3>
+                  {tieneCambioProgramado(item) && (
+                    <p className="text-xs font-bold text-amber-800 bg-amber-50 rounded-lg px-2.5 py-1.5 mt-2 inline-block">
+                      Cambia a ${item.precioNuevo} el {fechaLarga(item.precioNuevoDesde)}
+                    </p>
+                  )}
                   {tabActiva === 'productos' && <p className={`text-xs font-black uppercase ${item.stock > 0 ? 'text-gray-400' : 'text-red-500'}`}>Stock: {item.stock}</p>}
                   <div className="flex gap-2 mt-6">
                     <button onClick={() => {
                       setItemAEditar(item);
-                      setForm({ ...item, duracionMinutos: item.duracionMinutos || 30, activo: item.activo !== false });
+                      setForm({ ...item, categoria: item.categoria || '', duracionMinutos: item.duracionMinutos || 30, activo: item.activo !== false });
                       setMostrarForm(true);
                     }} className="flex-1 bg-gray-100 p-3 rounded-xl hover:bg-dorado transition-colors font-bold flex justify-center gap-2 text-sm">
                       <FaPenToSquare /> Editar
@@ -1222,6 +1248,19 @@ function BarberDashboard() {
             totalPaginas={listaCitas.totalPaginas}
             onCambiar={listaCitas.irAPagina}
             cargando={listaCitas.cargando}
+          />
+        )}
+
+        {/* ── CAMBIAR PRECIOS ── */}
+        {mostrarPrecios && tabActiva === 'servicios' && (
+          <PanelPrecios
+            servicios={[...items].sort((a, b) => a.orden - b.orden)}
+            onCerrar={() => setMostrarPrecios(false)}
+            onGuardado={(mensaje) => {
+              setMostrarPrecios(false);
+              mostrarNotificacion(mensaje);
+              cargarDatos();
+            }}
           />
         )}
 
@@ -1274,12 +1313,31 @@ function BarberDashboard() {
                       <div className="flex items-center justify-between border-b border-gray-200 pb-3">
                         <h4 className="text-xs font-black uppercase text-gray-400 tracking-widest">Opciones Avanzadas</h4>
                       </div>
+                      <div>
+                        <label htmlFor="item-categoria" className="text-[10px] font-black uppercase text-gray-400 tracking-widest flex items-center justify-between">
+                          Categoría <span className="text-gray-300 font-normal normal-case tracking-normal">pestaña en la página; vacía: sólo en "Todos"</span>
+                        </label>
+                        <input
+                          id="item-categoria"
+                          type="text"
+                          list="categorias-existentes"
+                          value={form.categoria}
+                          onChange={(e) => setForm({ ...form, categoria: e.target.value })}
+                          placeholder={tabActiva === 'servicios' ? 'Ej. Cortes, Barba, Faciales' : 'Ej. Cabello, Barba'}
+                          className="w-full mt-1 p-3 bg-white border border-gray-200 rounded-xl focus:border-dorado focus:ring-1 focus:ring-dorado font-bold outline-none transition-all"
+                        />
+                        {/* Sugiere las que ya existen, para no crear "Cortes" y "cortes" */}
+                        <datalist id="categorias-existentes">
+                          {categoriasDe(items).map(c => <option key={c} value={c} />)}
+                        </datalist>
+                      </div>
                       <div className="flex flex-col sm:flex-row gap-6">
                         <div className="flex-1">
-                          <label className="text-[10px] font-black uppercase text-gray-400 tracking-widest flex items-center justify-between">
-                            Posición (Orden) <span className="text-gray-300 font-normal">0 es primero</span>
+                          <label htmlFor="item-orden" className="text-[10px] font-black uppercase text-gray-400 tracking-widest flex items-center justify-between">
+                            Posición <span className="text-gray-300 font-normal normal-case tracking-normal">1 es el primero</span>
                           </label>
-                          <input type="number" value={form.orden} onChange={(e) => setForm({ ...form, orden: e.target.value })} className="w-full mt-1 p-3 bg-white border border-gray-200 rounded-xl focus:border-dorado focus:ring-1 focus:ring-dorado font-bold outline-none transition-all" />
+                          <input id="item-orden" type="number" min="1" value={form.orden} onChange={(e) => setForm({ ...form, orden: e.target.value })} placeholder="Al final" className="w-full mt-1 p-3 bg-white border border-gray-200 rounded-xl focus:border-dorado focus:ring-1 focus:ring-dorado font-bold outline-none transition-all" />
+                          <p className="text-[10px] text-gray-400 mt-1">Si ya hay otro en ese lugar, los demás se recorren.</p>
                         </div>
                         <div className="flex-1 flex flex-col justify-center">
                           <label className="flex items-center gap-3 cursor-pointer mt-2 sm:mt-6 p-2 rounded-lg hover:bg-gray-100 transition-colors">
