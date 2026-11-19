@@ -25,6 +25,27 @@
   /* OFERTA */
   --color-rojo-oferta: #A63A3A;
 }
+/* ── Tiras que se recorren de lado ───────────────────────────────────── */
+
+/* Sin barra de scroll a la vista: en pantallas chicas se encimaba sobre las
+   pestañas. Se sigue pudiendo arrastrar y recorrer con el teclado. */
+@utility sin-barra-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Degradados en las orillas: avisan que la tira sigue hacia ese lado */
+@utility difuminado-izq {
+  background-image: linear-gradient(to right, var(--color-beige), transparent);
+}
+
+@utility difuminado-der {
+  background-image: linear-gradient(to left, var(--color-beige), transparent);
+}
+
 /* ── Calendario de la agenda ─────────────────────────────────────────── */
 
 /* Horas en que la barbería está cerrada: rayado tenue, se lee sin estorbar */
