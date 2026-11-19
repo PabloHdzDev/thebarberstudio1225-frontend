@@ -18,7 +18,8 @@ import { enlaceWhatsApp, tieneWhatsApp } from '../utils/whatsapp';
 import CalendarioAgenda from '../components/calendario/CalendarioAgenda';
 import PanelCita from '../components/calendario/PanelCita';
 import PanelPrecios from '../components/PanelPrecios';
-import { categoriasDe, tieneCambioProgramado, fechaLarga } from '../utils/catalogo';
+import SelectorCategorias from '../components/SelectorCategorias';
+import { categoriasDe, categoriasDeElemento, tieneCambioProgramado, fechaLarga } from '../utils/catalogo';
 
 const DIAS_SEMANA = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
@@ -96,7 +97,7 @@ function BarberDashboard() {
     nombre: '', descripcion: '', precio: '', stock: 0, duracionMinutos: 30,
     fechaHora: '', notas: '', activo: true,
     servicio: '', cliente: '', nombreInvitado: '', esInvitado: false,
-    orden: '', categoria: '', esOferta: false, precioAnterior: '',
+    orden: '', categorias: [], esOferta: false, precioAnterior: '',
   });
   // Tabla para cambiar o programar los precios de varios servicios a la vez
   const [mostrarPrecios, setMostrarPrecios] = useState(false);
@@ -284,7 +285,7 @@ function BarberDashboard() {
         data.append('descripcion', form.descripcion);
         data.append('activo', form.activo);
         data.append('orden', form.orden);
-        data.append('categoria', form.categoria || '');
+        data.append('categorias', JSON.stringify(form.categorias || []));
         data.append('esOferta', form.esOferta);
         data.append('precioAnterior', form.precioAnterior || 0);
         if (tabActiva === 'servicios') {
@@ -365,7 +366,7 @@ function BarberDashboard() {
   const cerrarTodo = () => {
     setMostrarForm(false);
     setItemAEditar(null);
-    setForm({ nombre: '', descripcion: '', precio: '', stock: 0, duracionMinutos: 30, fechaHora: '', notas: '', activo: true, servicio: '', cliente: '', nombreInvitado: '', esInvitado: false, orden: '', categoria: '', esOferta: false, precioAnterior: '' });
+    setForm({ nombre: '', descripcion: '', precio: '', stock: 0, duracionMinutos: 30, fechaHora: '', notas: '', activo: true, servicio: '', cliente: '', nombreInvitado: '', esInvitado: false, orden: '', categorias: [], esOferta: false, precioAnterior: '' });
     setArchivo(null);
     setMenuMovil(false);
   };
@@ -1216,8 +1217,10 @@ function BarberDashboard() {
                   </div>
                 </div>
                 <div className="p-6">
-                  {item.categoria && (
-                    <p className="text-[10px] font-black uppercase tracking-widest text-dorado mb-1">{item.categoria}</p>
+                  {categoriasDeElemento(item).length > 0 && (
+                    <p className="text-[10px] font-black uppercase tracking-widest text-dorado mb-1">
+                      {categoriasDeElemento(item).join(' · ')}
+                    </p>
                   )}
                   <h3 className="text-xl font-bold mb-1">{item.nombre}</h3>
                   {tieneCambioProgramado(item) && (
@@ -1229,7 +1232,7 @@ function BarberDashboard() {
                   <div className="flex gap-2 mt-6">
                     <button onClick={() => {
                       setItemAEditar(item);
-                      setForm({ ...item, categoria: item.categoria || '', duracionMinutos: item.duracionMinutos || 30, activo: item.activo !== false });
+                      setForm({ ...item, categorias: categoriasDeElemento(item), duracionMinutos: item.duracionMinutos || 30, activo: item.activo !== false });
                       setMostrarForm(true);
                     }} className="flex-1 bg-gray-100 p-3 rounded-xl hover:bg-dorado transition-colors font-bold flex justify-center gap-2 text-sm">
                       <FaPenToSquare /> Editar
@@ -1313,24 +1316,12 @@ function BarberDashboard() {
                       <div className="flex items-center justify-between border-b border-gray-200 pb-3">
                         <h4 className="text-xs font-black uppercase text-gray-400 tracking-widest">Opciones Avanzadas</h4>
                       </div>
-                      <div>
-                        <label htmlFor="item-categoria" className="text-[10px] font-black uppercase text-gray-400 tracking-widest flex items-center justify-between">
-                          Categoría <span className="text-gray-300 font-normal normal-case tracking-normal">pestaña en la página; vacía: sólo en "Todos"</span>
-                        </label>
-                        <input
-                          id="item-categoria"
-                          type="text"
-                          list="categorias-existentes"
-                          value={form.categoria}
-                          onChange={(e) => setForm({ ...form, categoria: e.target.value })}
-                          placeholder={tabActiva === 'servicios' ? 'Ej. Cortes, Barba, Faciales' : 'Ej. Cabello, Barba'}
-                          className="w-full mt-1 p-3 bg-white border border-gray-200 rounded-xl focus:border-dorado focus:ring-1 focus:ring-dorado font-bold outline-none transition-all"
-                        />
-                        {/* Sugiere las que ya existen, para no crear "Cortes" y "cortes" */}
-                        <datalist id="categorias-existentes">
-                          {categoriasDe(items).map(c => <option key={c} value={c} />)}
-                        </datalist>
-                      </div>
+                      <SelectorCategorias
+                        valor={form.categorias}
+                        existentes={categoriasDe(items)}
+                        onCambiar={(categorias) => setForm({ ...form, categorias })}
+                        ejemplo={tabActiva === 'servicios' ? 'Nueva categoría. Ej. Combos' : 'Nueva categoría. Ej. Cabello'}
+                      />
                       <div className="flex flex-col sm:flex-row gap-6">
                         <div className="flex-1">
                           <label htmlFor="item-orden" className="text-[10px] font-black uppercase text-gray-400 tracking-widest flex items-center justify-between">

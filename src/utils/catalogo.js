@@ -1,10 +1,22 @@
 // Ayudas para servicios y productos, compartidas por el sitio y el panel.
 
+// Un servicio puede estar en varias categorías: "Corte + Barba" sale en
+// "Cortes" y en "Combos". Se acepta el campo viejo de una sola categoría por
+// si queda algún dato sin migrar.
+export const categoriasDeElemento = (elemento) => {
+  if (Array.isArray(elemento?.categorias)) return elemento.categorias.filter(Boolean);
+  return elemento?.categoria ? [elemento.categoria] : [];
+};
+
 // Categorías en el orden en que aparecen en la lista (que ya viene ordenada),
 // así el barbero decide el orden de las pestañas con la posición de cada servicio
 export const categoriasDe = (lista) => [
-  ...new Set(lista.map((elemento) => elemento.categoria).filter(Boolean)),
+  ...new Set(lista.flatMap(categoriasDeElemento)),
 ];
+
+// Sin categoría elegida ("Todos") entran todos
+export const estaEnCategoria = (elemento, categoria) =>
+  !categoria || categoriasDeElemento(elemento).includes(categoria);
 
 export const tieneCambioProgramado = (servicio) =>
   Boolean(servicio.precioNuevo && servicio.precioNuevoDesde);

@@ -7,7 +7,7 @@ import Footer from '../components/Footer';
 import MapaDiferido from '../components/MapaDiferido';
 import { optimizar } from '../utils/imagen';
 import PestanasCategoria from '../components/PestanasCategoria';
-import { categoriasDe, tieneCambioProgramado, fechaLarga, ultimoDiaAntes } from '../utils/catalogo';
+import { categoriasDe, estaEnCategoria, tieneCambioProgramado, fechaLarga, ultimoDiaAntes } from '../utils/catalogo';
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 // La semana se muestra empezando en lunes, no en domingo
@@ -96,12 +96,8 @@ function Home() {
 
   const categoriasServicios = categoriasDe(servicios);
   const categoriasProductos = categoriasDe(productos);
-  const serviciosFiltrados = categoriaServicio
-    ? servicios.filter(s => s.categoria === categoriaServicio)
-    : servicios;
-  const productosFiltrados = categoriaProducto
-    ? productos.filter(p => p.categoria === categoriaProducto)
-    : productos;
+  const serviciosFiltrados = servicios.filter(s => estaEnCategoria(s, categoriaServicio));
+  const productosFiltrados = productos.filter(p => estaEnCategoria(p, categoriaProducto));
 
   const serviciosMostrados = verTodosServicios
     ? serviciosFiltrados
