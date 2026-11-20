@@ -7,6 +7,8 @@ import Footer from '../components/Footer';
 import MapaDiferido from '../components/MapaDiferido';
 import { optimizar } from '../utils/imagen';
 import PestanasCategoria from '../components/PestanasCategoria';
+import Nieve from '../components/Nieve';
+import { navidadActiva } from '../utils/navidad';
 import { categoriasDe, estaEnCategoria, tieneCambioProgramado, fechaLarga, ultimoDiaAntes } from '../utils/catalogo';
 
 const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -53,6 +55,7 @@ const agruparHorarios = (horarios) => {
 // const SERVICIOS_VISIBLES = window.innerWidth < 1024 ? 8 : 9;
 
 function Home() {
+  const [navidad] = useState(navidadActiva);
   const [servicios, setServicios] = useState([]);
   const [productos, setProductos] = useState([]);
   const [horarios, setHorarios] = useState([]);
@@ -121,6 +124,8 @@ function Home() {
 
   return (
     <div className="font-sans text-negro-barber">
+      {navidad && <Nieve />}
+
 
       {/* AVISOS DE CAMBIO DE PRECIO: salen de los cambios programados en el
           panel y desaparecen solos cuando el cambio entra */}
@@ -201,7 +206,7 @@ function Home() {
             <div className="flex items-center justify-center gap-4">
               <span className="flex-1 h-1 bg-negro-suave max-w-80px md:max-w-120px"></span>
               <h2 className="text-xl md:text-4xl font-extrabold text-negro-barber uppercase tracking-tight whitespace-nowrap">
-                Nuestros Servicios
+                Nuestros Servicios{navidad && <span aria-hidden="true"> 🎄</span>}
               </h2>
               <span className="flex-1 h-1 bg-negro-suave max-w-80px md:max-w-120px"></span>
             </div>
@@ -320,7 +325,7 @@ function Home() {
             <div className="flex items-center justify-center gap-4">
               <span className="flex-1 h-1 bg-negro-suave max-w-80px md:max-w-120px"></span>
               <h2 className="text-xl md:text-4xl font-extrabold text-negro-barber uppercase tracking-tight whitespace-nowrap">
-                Productos Destacados
+                Productos Destacados{navidad && <span aria-hidden="true"> 🎁</span>}
               </h2>
               <span className="flex-1 h-1 bg-negro-suave max-w-80px md:max-w-120px"></span>
             </div>
