@@ -2,14 +2,37 @@ import { useEffect, useRef } from 'react';
 
 // Nieve cayendo, dibujada en un solo lienzo para que no pese en celulares.
 //
+// Los copos se dibujan a mano con sus seis brazos y sus ramitas, en vez de usar
+// el carácter ❄: así se ven igual en todos los celulares (hay teléfonos que lo
+// pintan como emoji azul) y se pueden teñir del color que haga falta.
+//
 // El fondo del sitio es claro (beige, gris y blanco), así que los copos no son
 // blancos: con un azul grisáceo frío se ven tanto sobre el fondo claro como
 // sobre la barra negra de arriba.
 const COLOR = '164, 186, 208';
-const CANTIDAD_MOVIL = 34;
-const CANTIDAD_ESCRITORIO = 70;
+const CANTIDAD_MOVIL = 26;
+const CANTIDAD_ESCRITORIO = 52;
+// Debajo de este tamaño el copo se dibuja como punto: a lo lejos no se
+// alcanzarían a ver los brazos y sólo ensuciarían la pantalla
+const MINIMO_CON_BRAZOS = 3.6;
 
 const alAzar = (min, max) => min + Math.random() * (max - min);
+
+// Un copo de seis brazos, cada uno con dos ramitas. Se arma todo como un solo
+// trazo y se pinta de una vez, que es mucho más rápido que brazo por brazo.
+const trazarCopo = (pincel, tamano) => {
+  pincel.beginPath();
+  for (let brazo = 0; brazo < 6; brazo++) {
+    pincel.rotate(Math.PI / 3);
+    pincel.moveTo(0, 0);
+    pincel.lineTo(0, -tamano);
+    pincel.moveTo(0, -tamano * 0.55);
+    pincel.lineTo(tamano * 0.32, -tamano * 0.82);
+    pincel.moveTo(0, -tamano * 0.55);
+    pincel.lineTo(-tamano * 0.32, -tamano * 0.82);
+  }
+  pincel.stroke();
+};
 
 function Nieve() {
   const lienzo = useRef(null);
@@ -26,17 +49,24 @@ function Nieve() {
     let animacion = null;
     let ultimo = 0;
 
-    const nuevoCopo = (arriba = false) => ({
-      x: Math.random() * ancho,
-      // Al empezar se reparten por toda la pantalla; después entran por arriba
-      y: arriba ? -10 : Math.random() * alto,
-      radio: alAzar(1.2, 3.6),
-      // Los más grandes caen más rápido: da sensación de profundidad
-      velocidad: alAzar(14, 42),
-      vaiven: alAzar(6, 20),
-      fase: Math.random() * Math.PI * 2,
-      opacidad: alAzar(0.45, 0.9),
-    });
+    const nuevoCopo = (arriba = false) => {
+      const tamano = alAzar(2.4, 9);
+      // Entre más grande, más rápido cae y más se nota: da sensación de
+      // profundidad, como si unos estuvieran cerca y otros lejos
+      const cercania = (tamano - 2.4) / 6.6;
+      return {
+        x: Math.random() * ancho,
+        // Al empezar se reparten por toda la pantalla; después entran por arriba
+        y: arriba ? -tamano * 2 : Math.random() * alto,
+        tamano,
+        velocidad: 13 + cercania * 42 + alAzar(0, 8),
+        vaiven: alAzar(6, 20),
+        fase: Math.random() * Math.PI * 2,
+        giro: Math.random() * Math.PI * 2,
+        vueltas: alAzar(-0.5, 0.5),
+        opacidad: 0.32 + cercania * 0.45 + alAzar(0, 0.12),
+      };
+    };
 
     const medir = () => {
       // En pantallas de mucha densidad se dibuja al doble, no más, para no
@@ -49,6 +79,7 @@ function Nieve() {
       canvas.style.width = `${ancho}px`;
       canvas.style.height = `${alto}px`;
       pincel.setTransform(densidad, 0, 0, densidad, 0, 0);
+      pincel.lineCap = 'round';
 
       const cantidad = ancho < 640 ? CANTIDAD_MOVIL : CANTIDAD_ESCRITORIO;
       copos = Array.from({ length: cantidad }, () => nuevoCopo());
@@ -61,18 +92,35 @@ function Nieve() {
       ultimo = ahora;
 
       pincel.clearRect(0, 0, ancho, alto);
+
       for (const copo of copos) {
         copo.y += copo.velocidad * lapso;
         copo.fase += lapso;
+        copo.giro += copo.vueltas * lapso;
+        if (copo.y - copo.tamano > alto) Object.assign(copo, nuevoCopo(true));
+
         const x = copo.x + Math.sin(copo.fase) * copo.vaiven;
+        const color = `rgba(${COLOR}, ${copo.opacidad})`;
 
-        if (copo.y - copo.radio > alto) Object.assign(copo, nuevoCopo(true));
+        if (copo.tamano < MINIMO_CON_BRAZOS) {
+          pincel.beginPath();
+          pincel.arc(x, copo.y, copo.tamano * 0.45, 0, Math.PI * 2);
+          pincel.fillStyle = color;
+          pincel.fill();
+          continue;
+        }
 
-        pincel.beginPath();
-        pincel.arc(x, copo.y, copo.radio, 0, Math.PI * 2);
-        pincel.fillStyle = `rgba(${COLOR}, ${copo.opacidad})`;
-        pincel.fill();
+        // save/restore deja la transformación como estaba para el copo
+        // siguiente; girar aquí es lo que hace que el copo dé vueltas al caer
+        pincel.save();
+        pincel.translate(x, copo.y);
+        pincel.rotate(copo.giro);
+        pincel.strokeStyle = color;
+        pincel.lineWidth = Math.max(0.75, copo.tamano * 0.15);
+        trazarCopo(pincel, copo.tamano);
+        pincel.restore();
       }
+
       animacion = requestAnimationFrame(dibujar);
     };
 
